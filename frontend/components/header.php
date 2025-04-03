@@ -17,7 +17,8 @@ $conn = Database::getConnection();
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <meta name="description" content="Système de gestion des horaires universitaires">
   <meta name="author" content="Nom de l'auteur">
-  <title>Admin | Gestion des Horaires Universitaires</title>
+  <title>Admin | Projet SGBD - Gestion des Horaires</title>
+  <!---Link vers nos ressources css--->
   <link rel="stylesheet" href="<?= $baseUrl ?>assets/css/sb-admin-2.min.css">
   <link rel="stylesheet" href="<?= $baseUrl ?>assets/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="<?= $baseUrl ?>assets/vendor/fontawesome-free/css/all.min.css">

@@ -3,12 +3,11 @@
 <footer class="sticky-footer bg-white">
   <div class="container my-auto">
     <div class="copyright text-center my-auto">
-      <span>&copy; Gestion des Horaires Universitaires 2025</span>
+      <span>&copy; @Projet-SGBD | Gestion des Horaires 2025</span>
     </div>
   </div>
 </footer>
-<!-- END Pied de page -->
-
+<!-- Fin Pied de page -->
 </div>
 
 

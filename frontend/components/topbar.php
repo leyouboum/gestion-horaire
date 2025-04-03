@@ -3,16 +3,16 @@
     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
         <i class="fa fa-bars"></i>
     </button>
-    <!-- Barre de recherche optionnel à amélior avec requetes précises -->
-    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+    <!-- Barre de recherche optionnel a ameliorer avec requetes precises -->
+    <form id="navbarSearchForm" class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
         <div class="input-group">
-            <input type="text"
+            <input id="navbarSearchInput" type="text"
                    class="form-control bg-light border-0 small"
                    placeholder="Rechercher..."
                    aria-label="Search"
                    aria-describedby="basic-addon2">
             <div class="input-group-append">
-                <button class="btn btn-primary" type="button">
+                <button id="navbarSearchButton" class="btn btn-primary" type="button">
                     <i class="fas fa-search fa-sm"></i>
                 </button>
             </div>
@@ -27,3 +27,30 @@
         </li>
     </ul>
 </nav>
+
+<!-- Script pour faire fonctionner la barre de recherche -->
+<script>
+  // Quand la page est charge, on attache des evenements a la barre de recherche
+  document.addEventListener("DOMContentLoaded", function() {
+      // On recupere le bouton et le champ de recherche
+      const searchButton = document.getElementById("navbarSearchButton");
+      const searchInput = document.getElementById("navbarSearchInput");
+      
+      // Quand on clique sur le bouton, on recupere le terme de recherche
+      searchButton.addEventListener("click", function() {
+          const query = searchInput.value.trim();
+          if (query !== "") {
+              // On redirige vers la page search.php avec le terme en parametre
+              window.location.href = "search.php?query=" + encodeURIComponent(query);
+          }
+      });
+      
+      // Optionnel : Si l'utilisateur appuie sur "Enter" dans le champ, on simule le clique sur le bouton
+      searchInput.addEventListener("keydown", function(e) {
+          if (e.key === "Enter") {
+              e.preventDefault();
+              searchButton.click();
+          }
+      });
+  });
+</script>
