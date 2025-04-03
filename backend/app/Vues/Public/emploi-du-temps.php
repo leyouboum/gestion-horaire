@@ -1,16 +1,20 @@
 <?php
-// emploi-du-temps.php
+// On récupere l'id du groupe depuis l'URL, si y'a pas on affiche une erreur toute simple
 $group_id = isset($_GET['group_id']) ? (int) $_GET['group_id'] : 0;
 if ($group_id <= 0) {
-    die("Identifiant de groupe invalide.");
+    die("Identifiant de groupe invalide."); // Notre message d'erreurs
 }
 
+//On va construire ici l'URL de l’API pour récupérer le programme du groupe
 $api_url = "http://127.0.0.1/gestion-horaire/backend/routes/public-api.php?action=emploi_du_temps&group_id=$group_id";
+
+//La lecture des données de l'API si ca marche pas on met un tableau vide
 $eventsJson = @file_get_contents($api_url);
 if ($eventsJson === false) {
     $eventsJson = '[]';
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -74,8 +78,8 @@ if ($eventsJson === false) {
     <h2 class="text-center mb-4">Emploi du Temps du Groupe #<?php echo htmlspecialchars($group_id); ?></h2>
     <div class="sidebar-info mb-4">
       <p><strong>Groupe :</strong> Affichage complet de l’emploi du temps pour le groupe sélectionné.</p>
-      <p>Chaque événement représente un cours avec la salle, le site et le matériel (fixe et mobile).</p>
-      <p><em>Astuce :</em> Cliquez sur un cours pour plus de détails.</p>
+      <p>Chaque événement représente un cours avec la salle, la durée du cours, le site et le matériel pour le cours.</p>
+      <p><em>Fonctionnement :</em> Cliquez sur un cours pour plus de détails.</p>
     </div>
 
     <div class="filter-container">
@@ -98,6 +102,7 @@ if ($eventsJson === false) {
       <button class="btn btn-outline-secondary" onclick="setCalendarView('timeGridDay')">Jour</button>
     </div>
 
+    <!-- La div principale pour l'affichage du calendrier de cours-->
     <div class="calendar-container mb-5">
       <div id="calendar"></div>
     </div>
@@ -126,10 +131,10 @@ if ($eventsJson === false) {
   <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
-    // Transformation des données récupérées via l'API en événements FullCalendar
+    // On transforme les données JSON récupérées via PHP en objets utilisables par FullCalendar
     let rawEvents = <?php echo $eventsJson; ?>;
     let allEvents = rawEvents.map(ev => {
-      // Concatène les matériels fixes et mobiles pour l'affichage
+      // Ici on va Concatèner les matériels fixes et mobiles pour l'affichage
       let materiels = "";
       if (ev.materiels_fixes && ev.materiels_mobiles) {
           materiels = ev.materiels_fixes + ", " + ev.materiels_mobiles;
