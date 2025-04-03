@@ -1,0 +1,79 @@
+gestion-horaire/
+├── backend/
+│   ├── app/
+│   │   ├── Controllers/
+│   │   │   ├── Admin/
+│   │   │   │   ├── UniversiteController.php
+│   │   │   │   ├── CoursController.php
+│   │   │   │   ├── GroupesController.php
+│   │   │   │   ├── PlanningController.php
+│   │   │   │   ├── SalleController.php
+│   │   │   │   ├── SiteController.php
+│   │   │   │   ├── MaterielController.php
+│   │   │   ├── Public/
+│   │   │       ├── HoraireController.php
+│   │   │       ├── GroupeController.php
+│   │   │       ├── UniversiteController.php
+│   │   ├── Models/
+│   │   │   ├── Universite.php
+│   │   │   ├── Groupe.php
+│   │   │   ├── Cours.php
+│   │   │   ├── Planning.php
+│   │   │   ├── Salle.php
+│   │   │   ├── Site.php
+│   │   │   ├── Materiel.php
+│   │   ├── Repositories/
+│   │   │   ├── UniversiteRepository.php
+│   │   │   ├── GroupeRepository.php
+│   │   │   ├── CoursRepository.php
+│   │   │   ├── PlanningRepository.php
+│   │   │   ├── SalleRepository.php
+│   │   │   ├── SiteRepository.php
+│   │   │   ├── MaterielRepository.php
+│   │   ├── Services/
+│   │   │   ├── UniversiteService.php
+│   │   │   ├── GroupeService.php
+│   │   │   ├── CoursService.php
+│   │   │   ├── PlanningService.php
+│   │   │   ├── SalleService.php
+│   │   │   ├── SiteService.php
+│   │   │   ├── MaterielService.php
+│   │   │   ├── AuditService.php
+│   │   ├── Vues/
+│   │   │   ├── Admin/
+│   │   │   │   ├── dashboard.php
+│   │   │   │   ├── cours.php
+│   │   │   │   ├── groupes.php
+│   │   │   │   ├── sites.php
+│   │   │   │   ├── materiels.php
+│   │   │   │   ├── planning.php
+│   │   │   │   ├── salles.php
+│   │   │   │   ├── universite.php
+│   │   │   │   ├── utilisateurs.php
+│   │   │   ├── Public/
+│   │   │       ├── emploi-du-temps.php
+│   │   │       ├── contact.html
+│   │   │       ├── faq.html
+│   ├── routes/
+│   │   ├── admin-api.php
+│   │   ├── public-api.php
+│   ├── config/
+│   │   ├── database.php
+│   ├── database/
+│   │   ├── migrations/
+│   │   ├── seeders/
+│   ├── storage/
+├── frontend/
+│   ├── assets/
+│   │   ├── bootstrap/
+│   │   ├── js/
+│   │   ├── css/
+│   │   ├── vendor/
+│   ├── components/
+│   │   ├── header.php
+│   │   ├── footer.php
+│   │   ├── sidebar.php
+│   │   ├── topbar.php
+│   ├── index.html
+│   ├── config.php
+├── .htaccess
