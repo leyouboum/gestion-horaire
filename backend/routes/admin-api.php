@@ -169,7 +169,7 @@ try {
                     break;
                 case 'PUT':
                     if ($action === 'update' && isset($_GET['id'])) {
-                        $id = (int) $_GET['id'];
+                        $id = (int) $_GET['id']; //recupere le id  de l'université à mettre a jour
                         $data = json_decode(file_get_contents('php://input'), true);
                         if ($data && $groupesController->updateGroupe($id, $data)) {
                             echo json_encode(["message" => "Groupe mis à jour"]);
@@ -578,6 +578,7 @@ try {
                 "error" => "Entité inconnue. Les entités supportées sont 'cours', 'groupes', 'planning', 'salles', 'sites', 'universites' et 'materiels'"
             ]);
     }
+    // Gestion des exceptions générales
 } catch (\Exception $ex) {
     http_response_code(500);
     echo json_encode(["error" => $ex->getMessage()]);

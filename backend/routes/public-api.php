@@ -4,6 +4,7 @@ declare(strict_types=1);
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
+// Inclusion des fichiers nécessaires pour la configuration de la base de données et les classes de contrôleurs et modèles
 require_once __DIR__.'/../config/database.php';
 
 require_once __DIR__.'/../app/Controllers/Public/HoraireController.php';
@@ -26,6 +27,7 @@ require_once __DIR__.'/../app/Models/Groupe.php';
 require_once __DIR__.'/../app/Models/Planning.php';
 require_once __DIR__.'/../app/Models/Materiel.php';
 
+// Utilisation des contrôleurs pour faciliter leur accès
 use app\Controllers\Public\HoraireController;
 use app\Controllers\Public\UniversiteController;
 use app\Controllers\Public\GroupeController;
@@ -34,6 +36,7 @@ $horaireController    = new HoraireController();
 $universiteController = new UniversiteController();
 $groupeController     = new GroupeController();
 
+// Récupération de l'action passée en paramètre dans l'URL (GET)
 $action = $_GET['action'] ?? null;
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -47,6 +50,7 @@ try {
                 echo json_encode(["error" => "Méthode non autorisée. Utilisez GET pour cette action."]);
             }
             break;
+             // Action pour récupérer les groupes d'une université spécifique
         case 'groupes_by_univ':
             if ($method === 'GET') {
                 $groupeController->getGroupesByUniversite();
@@ -63,6 +67,7 @@ try {
                 echo json_encode(["error" => "Méthode non autorisée. Utilisez GET pour cette action."]);
             }
             break;
+            // Action pour récupérer l'emploi du temps
         case 'emploi_du_temps':
             if ($method === 'GET') {
                 $horaireController->getEmploiDuTemps();
@@ -77,6 +82,7 @@ try {
             break;
     }
 } catch (\Exception $ex) {
+    // message affiché en cas d'erreur interne
     http_response_code(500);
     echo json_encode(["error" => "Une erreur interne est survenue : ". $ex->getMessage()]);
 }
