@@ -44,7 +44,7 @@ try {
                 $universiteController->getAllUniversites();
             } else {
                 http_response_code(405);
-                echo json_encode(["error" => "Méthode non autorisée"]);
+                echo json_encode(["error" => "Méthode non autorisée. Utilisez GET pour cette action."]);
             }
             break;
         case 'groupes_by_univ':
@@ -52,7 +52,7 @@ try {
                 $groupeController->getGroupesByUniversite();
             } else {
                 http_response_code(405);
-                echo json_encode(["error" => "Méthode non autorisée"]);
+                echo json_encode(["error" => "Méthode non autorisée. Utilisez GET pour cette action."]);
             }
             break;
         case 'filters':
@@ -60,7 +60,7 @@ try {
                 $horaireController->getFilters();
             } else {
                 http_response_code(405);
-                echo json_encode(["error" => "Méthode non autorisée"]);
+                echo json_encode(["error" => "Méthode non autorisée. Utilisez GET pour cette action."]);
             }
             break;
         case 'emploi_du_temps':
@@ -68,15 +68,15 @@ try {
                 $horaireController->getEmploiDuTemps();
             } else {
                 http_response_code(405);
-                echo json_encode(["error" => "Méthode non autorisée"]);
+                echo json_encode(["error" => "Méthode non autorisée. Utilisez GET pour cette action."]);
             }
             break;
         default:
             http_response_code(400);
-            echo json_encode(["error" => "Action inconnue ou manquante"]);
+            echo json_encode(["error" => "Action inconnue ou manquante. Veuillez spécifier une action valide."]);
             break;
     }
 } catch (\Exception $ex) {
     http_response_code(500);
-    echo json_encode(["error" => $ex->getMessage()]);
+    echo json_encode(["error" => "Une erreur interne est survenue : ". $ex->getMessage()]);
 }

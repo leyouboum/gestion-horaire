@@ -7,7 +7,7 @@
   <title>Accueil | Projet SGBD</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  
+
   <!--- Ajout d'un style css pour la gestion des divs des sélections des listes déroulantes, des boutons et des survols-->
   <style>
     .selection-container {
@@ -43,6 +43,12 @@
   <div class="container mt-5">
     <div class="selection-container bg-white rounded shadow-sm">
       <h2 class="text-center mb-4">Sélectionnez votre Université et Groupe</h2>
+      
+      <!-- Affichage du message dynamique -->
+      <div id="welcome-message" class="alert alert-info d-none text-center mb-4">
+        Sélectionnez votre Université pour voir votre groupe et emploi du temps.
+      </div>
+      
       <div class="mb-3">
         <label for="universite" class="form-label fw-bold">Université</label>
         <select id="universite" class="form-select" onchange="loadGroupes()">
@@ -79,6 +85,7 @@
       let url = new URL(API_URL);
       url.search = new URLSearchParams(params).toString();
       fetch(url)
+
         .then(response => response.json())
         .then(data => callback(data))
         .catch(error => console.error("Erreur de chargement:", error));
@@ -98,22 +105,32 @@
     }
 
     function loadGroupes() {
-      const univId = document.getElementById("universite").value;
-      const groupeSelect = document.getElementById("groupe");
-      groupeSelect.innerHTML = '<option value="">-- Sélectionnez un Groupe --</option>';
-      groupeSelect.disabled = true;
-      if (univId) {
-        fetchData({ action: "groupes_by_univ", universite_id: univId }, function(data) {
-          data.forEach(groupe => {
-            const option = document.createElement("option");
-            option.value = groupe.id_groupe;
-            option.textContent = groupe.nom_groupe;
-            groupeSelect.appendChild(option);
-          });
-          groupeSelect.disabled = false;
+  const univId = document.getElementById("universite").value;
+  const groupeSelect = document.getElementById("groupe");
+  groupeSelect.innerHTML = '<option value="">-- Sélectionnez un Groupe --</option>';
+  groupeSelect.disabled = true;
+  document.getElementById("welcome-message").classList.add("d-none");  // Cacher le message d'accueil une fois une université sélectionnée
+  if (univId) {
+    fetchData({ action: "groupes_by_univ", universite_id: univId }, function(data) {
+      if (data.length === 0) {
+        alert("Aucun groupe trouvé pour cette université.");
+      } else {
+        data.forEach(groupe => {
+          const option = document.createElement("option");
+          option.value = groupe.id_groupe;
+          option.textContent = groupe.nom_groupe;
+          groupeSelect.appendChild(option);
         });
+        groupeSelect.disabled = false;
       }
-    }
+    });
+  } else {
+      // Afficher le message si aucune université sélectionnée
+    document.getElementById("welcome-message").classList.remove("d-none");
+   
+  }
+}
+
 
     function redirectToEmploi() {
       const groupeId = document.getElementById("groupe").value;
