@@ -16,13 +16,15 @@ class MaterielRepository {
     // Récupère tout le matériel en joignant le site d'affectation
     public function getAllMateriel(): array {
         $sql = "
-            SELECT m.*, s.nom AS site_affectation
+            SELECT m.*, s.nom_salle AS salle_fixe, si.nom AS site_affectation
             FROM materiel m
-            LEFT JOIN site s ON m.id_site_affectation = s.id_site
+            LEFT JOIN salle s ON m.id_salle_fixe = s.id_salle
+            LEFT JOIN site si ON m.id_site_affectation = si.id_site
         ";
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
+    
 
     // Récupère un matériel par son ID
     public function getMaterielById(int $id): ?array {
