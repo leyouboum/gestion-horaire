@@ -167,12 +167,9 @@ function renderMateriel(data) {
     return;
   }
   data.forEach(m => {
+    // Affichage de la salle fixe à partir de la colonne jointe "salle_fixe"
+    const salleText = m.is_mobile ? '-' : (m.salle_fixe ? sanitize(m.salle_fixe) : '-');
     const siteAffectation = m.site_affectation ? sanitize(m.site_affectation) : '-';
-    // Pour le matériel non mobile, on n'affiche la salle fixe que si elle est connue
-    const salleText = m.is_mobile 
-      ? '-' 
-      : (m.id_salle_fixe && sallesDisponibles[m.id_salle_fixe] ? sanitize(sallesDisponibles[m.id_salle_fixe]) : '-');
-
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${m.id_materiel}</td>
@@ -208,13 +205,13 @@ async function handleMaterielFormSubmit() {
   if (is_mobile) {
     id_salle_fixe = null;
   } else {
-    id_salle_fixe = (affectationSite && id_salle_fixe) ? parseInt(id_salle_fixe, 10) : null;
+    id_salle_fixe = id_salle_fixe ? parseInt(id_salle_fixe, 10) : null;
   }
 
   const payload = {
     type_materiel,
     is_mobile,
-    id_salle_fixe: id_salle_fixe ? parseInt(id_salle_fixe, 10) : null,
+    id_salle_fixe: id_salle_fixe,
     id_site_affectation: is_mobile && affectationSite ? parseInt(affectationSite, 10) : null
   };
 
