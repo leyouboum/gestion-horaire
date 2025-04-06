@@ -1,14 +1,14 @@
 <?php
-// On récupere l'id du groupe depuis l'URL, si y'a pas on affiche une erreur toute simple
+// Récupération de l'id du groupe depuis l'URL
 $group_id = isset($_GET['group_id']) ? (int) $_GET['group_id'] : 0;
 if ($group_id <= 0) {
-    die("Identifiant de groupe invalide."); // Notre message d'erreurs
+    die("Identifiant de groupe invalide.");
 }
 
-//On va construire ici l'URL de l’API pour récupérer le programme du groupe
+// Construction de l'URL de l’API pour récupérer le programme du groupe
 $api_url = "http://127.0.0.1/gestion-horaire/backend/routes/public-api.php?action=emploi_du_temps&group_id=$group_id";
 
-//La lecture des données de l'API si ca marche pas on met un tableau vide
+// Lecture des données de l'API (si la lecture échoue, un tableau vide est utilisé)
 $eventsJson = @file_get_contents($api_url);
 if ($eventsJson === false) {
     $eventsJson = '[]';
@@ -102,7 +102,7 @@ if ($eventsJson === false) {
       <button class="btn btn-outline-secondary" onclick="setCalendarView('timeGridDay')">Jour</button>
     </div>
 
-    <!-- La div principale pour l'affichage du calendrier de cours-->
+    <!-- Div principale pour l'affichage du calendrier -->
     <div class="calendar-container mb-5">
       <div id="calendar"></div>
     </div>
@@ -120,7 +120,7 @@ if ($eventsJson === false) {
           <p><strong>Horaire :</strong> <span id="modalTime"></span></p>
           <p><strong>Salle :</strong> <span id="modalSalle"></span></p>
           <p><strong>Site :</strong> <span id="modalSite"></span></p>
-          <p><strong>Matériel :</strong> <span id="modalMateriel"></span></p>
+          <p><strong>Matériel :</strong><br> <span id="modalMateriel"></span></p>
         </div>
       </div>
     </div>
@@ -131,20 +131,26 @@ if ($eventsJson === false) {
   <!-- FullCalendar JS -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <script>
-    // On transforme les données JSON récupérées via PHP en objets utilisables par FullCalendar
+    // Transformation des données JSON récupérées via PHP en objets pour FullCalendar
     let rawEvents = <?php echo $eventsJson; ?>;
     let allEvents = rawEvents.map(ev => {
-      // Ici on va Concatèner les matériels fixes et mobiles pour l'affichage
+      // Concaténer séparément le matériel fixe et le matériel mobile
+      let materielF = ev.materiels_fixes ? ev.materiels_fixes : "";
+      let materielM = ev.materiels_mobiles ? ev.materiels_mobiles : "";
       let materiels = "";
-      if (ev.materiels_fixes && ev.materiels_mobiles) {
-          materiels = ev.materiels_fixes + ", " + ev.materiels_mobiles;
-      } else if (ev.materiels_fixes) {
-          materiels = ev.materiels_fixes;
-      } else if (ev.materiels_mobiles) {
-          materiels = ev.materiels_mobiles;
-      } else {
+      if(materielF) {
+          materiels += "<strong>Fixe:</strong> " + materielF;
+      }
+      if(materielM) {
+          if(materiels !== "") {
+              materiels += "<br>";
+          }
+          materiels += "<strong>Mobile:</strong> " + materielM;
+      }
+      if(materiels === "") {
           materiels = "N/A";
       }
+      
       let color = getColorByCourseId(ev.id_cours || 0);
       return {
         title: ev.nom_cours,
@@ -153,18 +159,18 @@ if ($eventsJson === false) {
         backgroundColor: color,
         borderColor: color,
         extendedProps: {
-          salle: ev.nom_salle,
+          salle: ev.nom_salle, // Nom de la salle fixe récupéré via la jointure dans l'API
           site: ev.site_name,
           materiel: materiels,
           course_id: ev.id_cours,
-          // Ajout des heures d'ouverture et fermeture du site
+          // Heures d'ouverture et de fermeture du site
           heure_ouverture: ev.heure_ouverture,
           heure_fermeture: ev.heure_fermeture
         }
       };
     });
     
-    // Détermine dynamiquement les plages horaires à afficher
+    // Définition dynamique de l'affichage des plages horaires
     let defaultSlotMinTime = "08:00:00";
     let defaultSlotMaxTime = "22:00:00";
     if(allEvents.length > 0 && allEvents[0].extendedProps.heure_ouverture && allEvents[0].extendedProps.heure_fermeture) {
@@ -182,7 +188,6 @@ if ($eventsJson === false) {
           center: 'title',
           right: ''
         },
-        // Utilisation des heures d'ouverture/fermeture du site
         slotMinTime: defaultSlotMinTime,
         slotMaxTime: defaultSlotMaxTime,
         weekends: true,
@@ -197,7 +202,8 @@ if ($eventsJson === false) {
           document.getElementById('modalTime').textContent = `${startStr} - ${endStr}`;
           document.getElementById('modalSalle').textContent = info.event.extendedProps.salle || "Non spécifiée";
           document.getElementById('modalSite').textContent = info.event.extendedProps.site || "Non spécifié";
-          document.getElementById('modalMateriel').textContent = info.event.extendedProps.materiel || "N/A";
+          // Utilisation de innerHTML pour afficher le matériel avec des sauts de ligne
+          document.getElementById('modalMateriel').innerHTML = info.event.extendedProps.materiel || "N/A";
           new bootstrap.Modal(document.getElementById('eventModal')).show();
         }
       });
