@@ -13,10 +13,14 @@ class MaterielRepository {
         $this->pdo = Database::getConnection();
     }
 
-    // Récupère tout le matériel en joignant le site d'affectation
+    /**
+     * Récupère tout le matériel, en joignant éventuellement le nom de la salle et le nom du site.
+     */
     public function getAllMateriel(): array {
         $sql = "
-            SELECT m.*, s.nom_salle AS salle_fixe, si.nom AS site_affectation
+            SELECT m.*,
+                   s.nom_salle AS salle_fixe,
+                   si.nom AS site_affectation
             FROM materiel m
             LEFT JOIN salle s ON m.id_salle_fixe = s.id_salle
             LEFT JOIN site si ON m.id_site_affectation = si.id_site
@@ -25,14 +29,18 @@ class MaterielRepository {
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
-    
 
-    // Récupère un matériel par son ID
+    /**
+     * Récupère un seul matériel par ID, avec les mêmes champs que la liste.
+     */
     public function getMaterielById(int $id): ?array {
         $sql = "
-            SELECT m.*, s.nom AS site_affectation
+            SELECT m.*,
+                   s.nom_salle AS salle_fixe,
+                   si.nom AS site_affectation
             FROM materiel m
-            LEFT JOIN site s ON m.id_site_affectation = s.id_site
+            LEFT JOIN salle s ON m.id_salle_fixe = s.id_salle
+            LEFT JOIN site si ON m.id_site_affectation = si.id_site
             WHERE m.id_materiel = ?
         ";
         $stmt = $this->pdo->prepare($sql);
@@ -41,9 +49,12 @@ class MaterielRepository {
         return $result ?: null;
     }
 
-    // Crée un nouveau matériel
+    /**
+     * Crée un nouveau matériel.
+     */
     public function createMateriel(array $data): bool {
-        $sql = "INSERT INTO materiel (type_materiel, is_mobile, id_salle_fixe, id_site_affectation) VALUES (?, ?, ?, ?)";
+        $sql = "INSERT INTO materiel (type_materiel, is_mobile, id_salle_fixe, id_site_affectation)
+                VALUES (?, ?, ?, ?)";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([
             $data['type_materiel'],
@@ -53,9 +64,16 @@ class MaterielRepository {
         ]);
     }
 
-    // Met à jour un matériel
+    /**
+     * Met à jour un matériel existant.
+     */
     public function updateMateriel(int $id, array $data): bool {
-        $sql = "UPDATE materiel SET type_materiel = ?, is_mobile = ?, id_salle_fixe = ?, id_site_affectation = ? WHERE id_materiel = ?";
+        $sql = "UPDATE materiel
+                SET type_materiel = ?,
+                    is_mobile = ?,
+                    id_salle_fixe = ?,
+                    id_site_affectation = ?
+                WHERE id_materiel = ?";
         $stmt = $this->pdo->prepare($sql);
         return $stmt->execute([
             $data['type_materiel'],
@@ -66,22 +84,26 @@ class MaterielRepository {
         ]);
     }
 
-    // Supprime un matériel
+    /**
+     * Supprime un matériel.
+     */
     public function deleteMateriel(int $id): bool {
         $stmt = $this->pdo->prepare("DELETE FROM materiel WHERE id_materiel = ?");
         return $stmt->execute([$id]);
     }
 
-    // Récupère le matériel fixe installé dans une salle donnée
+    /**
+     * Récupère le matériel fixe installé dans une salle donnée.
+     */
     public function getMaterielBySalle(int $idSalle): array {
         $stmt = $this->pdo->prepare("SELECT * FROM materiel WHERE id_salle_fixe = ?");
         $stmt->execute([$idSalle]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
     
-    // Récupère les matériels mobiles.
-    // Ici, nous renvoyons tous les matériels mobiles (is_mobile = 1) 
-    // Mais dans un environnement idéal, vous pourriez lier un matériel mobile à un site via la colonne id_site_affectation.
+    /**
+     * Récupère le matériel mobile affecté à un site donné.
+     */
     public function getMobileMaterielBySite(int $siteId): array {
         $sql = "SELECT * FROM materiel WHERE is_mobile = 1 AND id_site_affectation = ?";
         $stmt = $this->pdo->prepare($sql);
