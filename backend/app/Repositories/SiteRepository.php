@@ -28,6 +28,7 @@ class SiteRepository
                 u.nom AS nom_universite
             FROM site s
             JOIN universite u ON s.id_universite = u.id_universite
+            ORDER BY s.id_site DESC
         ";
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

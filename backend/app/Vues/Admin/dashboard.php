@@ -1,11 +1,7 @@
 <?php
 /**
  * dashboard.php
- * Tableau de bord Admin pour SB Admin 2, sans sessions ni triggers.
- * 
- * Il affiche désormais :
- * - Un bloc « Nombre d’opérations » qui lit le total depuis la table audit_log.
- * - Un bloc « Horaires générés » qui lit le total depuis la table planning.
+ * Tableau de bord Admin
  */
 
 // 1) Inclusion du header (ouvre <html>, <head>, <body> et <div id="wrapper">)

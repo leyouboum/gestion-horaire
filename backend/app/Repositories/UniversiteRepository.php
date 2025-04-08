@@ -21,7 +21,7 @@ class UniversiteRepository
      */
     public function getAll(): array
     {
-        $stmt = $this->pdo->query("SELECT * FROM universite ORDER BY nom ASC");
+        $stmt = $this->pdo->query("SELECT * FROM universite ORDER BY nom DESC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
 

@@ -21,7 +21,7 @@ class SalleRepository
             SELECT s.id_salle, s.nom_salle, s.capacite_max, si.nom AS nom_site, si.id_site
             FROM salle s
             JOIN site si ON s.id_site = si.id_site
-            ORDER BY s.id_salle ASC
+            ORDER BY s.id_salle DESC
         ";
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

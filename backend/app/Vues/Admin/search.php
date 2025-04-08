@@ -194,7 +194,6 @@ $materiels = $stmtMateriel->fetchAll(PDO::FETCH_ASSOC);
           <?php endif; ?>
         </div>
       </div>
-      
     </div> <!-- Fin du container-fluid my-4 -->
   </div> <!-- Fin #content -->
 </div> <!-- Fin #content-wrapper -->

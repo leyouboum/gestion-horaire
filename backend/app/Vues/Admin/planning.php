@@ -1,7 +1,7 @@
 <?php
 /**
  * planning.php
- * Gestion du Planning (CRUD), sans sessions ni triggers, pour SB Admin 2.
+ * Gestion du Planning (CRUD)
  */
 
 // Inclusion du header (ouvre <html>, <head>, <body> et <div id="wrapper">)
@@ -185,11 +185,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('customDuration').checked) updateFinFromDuration();
   });
 
+  // Configuration de la DataTable
   setTimeout(() => {
     $('#dataTablePlanning').DataTable({
       responsive: true,
       pageLength: 10,
-      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' }
+      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' },
+      order: [[0, 'desc']]
     });
   }, 500);
 });
@@ -330,7 +332,7 @@ async function loadGroupesBySite(siteId) {
 // Charger la liste complète du planning
 async function loadPlanning() {
   try {
-    // On utilise ici l'action "listAll" (vous pouvez l'adapter)
+    // On utilise ici l'action "listAll" (à adapter si besoin)
     const response = await fetch('../../../routes/admin-api.php?entity=planning&action=listAll');
     const data = await response.json();
     renderPlanning(data);
@@ -348,6 +350,8 @@ function renderPlanning(data) {
     tbody.innerHTML = '<tr><td colspan="10" class="text-center">Aucune séance planifiée.</td></tr>';
     return;
   }
+
+  const now = new Date(); // Date/heure actuelle
   data.forEach(item => {
     const nomSite   = item.site_name     || 'N/A';
     const nomSalle  = item.nom_salle    || 'N/A';
@@ -356,6 +360,11 @@ function renderPlanning(data) {
     const materiels = item.materiels    || '-';
 
     const row = document.createElement('tr');
+    const startDate = new Date(item.date_heure_debut.replace(' ', 'T')); // "YYYY-MM-DD HH:MM:SS"
+    
+    // Si la date de début est déjà passée, on va désactiver le bouton "Modifier"
+    let disableEdit = (startDate <= now);
+
     row.innerHTML = `
       <td>${item.id_planning}</td>
       <td>${sanitize(nomSite)}</td>
@@ -377,7 +386,8 @@ function renderPlanning(data) {
             '${item.date_heure_debut.replace(' ', 'T')}', 
             '${item.date_heure_fin.replace(' ', 'T')}', 
             '${sanitize(item.annee_academique)}'
-          )">
+          )"
+          ${disableEdit ? 'disabled' : ''}>
           <i class="fas fa-edit"></i> Modifier
         </button>
         <button class="btn btn-danger btn-sm" onclick="deletePlanning(${item.id_planning})">
@@ -393,7 +403,9 @@ function renderPlanning(data) {
 async function editPlanning(id, siteId, salle, cours, groupe, debut, fin, annee) {
   document.getElementById('id_planning').value = id;
   document.getElementById('id_site').value = siteId;
+
   await onSiteChange(); // charge salles, cours, groupes du site
+
   document.getElementById('id_salle').value  = salle;
   document.getElementById('id_cours').value  = cours;
   document.getElementById('id_groupe').value = groupe;
@@ -458,10 +470,14 @@ function handlePlanningFormSubmit() {
     showPlanningMessage("Tous les champs sont requis.", 'danger');
     return;
   }
+
+  // Contrôle cohérence date/heure
   if (new Date(dateDebut) >= new Date(dateFin)) {
     showPlanningMessage("La date de début doit être antérieure à la date de fin.", 'danger');
     return;
   }
+
+  // Appliquer la durée personnalisée si cochée
   if (document.getElementById('customDuration').checked) {
     updateFinFromDuration();
     dateFin = document.getElementById('date_heure_fin').value;
@@ -495,7 +511,9 @@ function handlePlanningFormSubmit() {
     })
     .then(response => response.json())
     .then(resp => {
-      if (resp.message) {
+      if (resp.errorCode) {
+        handlePlanningErrorCode(resp.errorCode, resp.error);
+      } else if (resp.message) {
         showPlanningMessage(resp.message, 'success');
         resetPlanningForm();
         loadPlanning();
@@ -523,6 +541,7 @@ function handlePlanningFormSubmit() {
   }
 }
 
+// Création simple (pas de répétition)
 function createSinglePlanning(plData) {
   fetch('../../../routes/admin-api.php?entity=planning&action=create', {
     method: 'POST',
@@ -531,7 +550,9 @@ function createSinglePlanning(plData) {
   })
   .then(response => response.json())
   .then(resp => {
-    if (resp.message) {
+    if (resp.errorCode) {
+      handlePlanningErrorCode(resp.errorCode, resp.error);
+    } else if (resp.message) {
       showPlanningMessage(resp.message, 'success');
       resetPlanningForm();
       loadPlanning();
@@ -576,9 +597,9 @@ function createWeeklyRecurrence(plData, repeatEndDate) {
   .then(results => {
     let hasError = false;
     results.forEach(r => {
-      if (r.error) {
+      if (r.errorCode || r.error) {
         hasError = true;
-        console.warn("Erreur sur une occurrence:", r.error);
+        console.warn("Erreur sur une occurrence:", r.errorCode || r.error);
       }
     });
     if (!hasError) {
@@ -595,6 +616,7 @@ function createWeeklyRecurrence(plData, repeatEndDate) {
   });
 }
 
+// Conversion Date -> String "YYYY-MM-DD HH:MM:SS"
 function formatDateTime(d) {
   const y   = d.getFullYear();
   const m   = String(d.getMonth() + 1).padStart(2, '0');
@@ -602,6 +624,27 @@ function formatDateTime(d) {
   const hh  = String(d.getHours()).padStart(2, '0');
   const mm  = String(d.getMinutes()).padStart(2, '0');
   return `${y}-${m}-${day} ${hh}:${mm}:00`;
+}
+
+// Gestion des codes d'erreur renvoyés par l'API
+function handlePlanningErrorCode(code, message) {
+  switch (code) {
+    case 'CONFLICT_SALLE':
+      showPlanningMessage("Cette salle est déjà occupée sur ce créneau !", 'danger');
+      break;
+    case 'CONFLICT_GROUPE':
+      showPlanningMessage("Ce groupe a déjà un autre cours sur ce créneau !", 'danger');
+      break;
+    case 'TRAVEL_TIME':
+      showPlanningMessage("Pas assez de temps pour déplacer le groupe entre 2 sites !", 'danger');
+      break;
+    case 'PAST_DATE':
+      showPlanningMessage("Impossible de modifier un horaire déjà passé.", 'danger');
+      break;
+    default:
+      // On affiche le message renvoyé par l'API si disponible
+      showPlanningMessage(message || "Erreur de planning inconnue.", 'danger');
+  }
 }
 
 // Réinitialiser le formulaire
@@ -613,14 +656,18 @@ function resetPlanningForm() {
   document.getElementById('id_salle').disabled   = true;
   document.getElementById('id_cours').disabled   = true;
   document.getElementById('id_groupe').disabled  = true;
+
   document.getElementById('date_heure_debut').value = '';
   document.getElementById('date_heure_fin').value   = '';
   document.getElementById('annee_academique').value = '2024-2025';
+
   document.getElementById('repeatWeekly').checked    = false;
   document.getElementById('repeatEndDate').value     = '';
   document.getElementById('repeatContainer').style.display = 'none';
+
   document.getElementById('customDuration').checked  = false;
   document.getElementById('durationContainer').style.display = 'none';
+
   document.getElementById('mobile_materiel').selectedIndex = -1;
 
   document.getElementById('formTitle').textContent = "Ajouter une Séance de Cours";
@@ -628,6 +675,7 @@ function resetPlanningForm() {
   document.getElementById('btnCancel').style.display = "none";
 }
 
+// Affichage d'un message (alerte) pendant quelques secondes
 function showPlanningMessage(msg, type) {
   const alertMsg = document.getElementById('alertMsg');
   alertMsg.textContent = msg;
@@ -638,6 +686,7 @@ function showPlanningMessage(msg, type) {
   }, 3000);
 }
 
+// Sanitize pour éviter injections HTML
 function sanitize(str) {
   if (typeof str !== 'string') return str;
   return str.replace(/[&<>"'`]/g, m => {

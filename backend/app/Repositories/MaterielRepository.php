@@ -20,6 +20,7 @@ class MaterielRepository {
             FROM materiel m
             LEFT JOIN salle s ON m.id_salle_fixe = s.id_salle
             LEFT JOIN site si ON m.id_site_affectation = si.id_site
+            ORDER BY m.id_materiel DESC
         ";
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

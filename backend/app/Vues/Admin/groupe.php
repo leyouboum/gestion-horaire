@@ -1,7 +1,7 @@
 <?php
 /**
  * groupes.php
- * Gestion des Groupes (CRUD) sans sessions, SB Admin 2.
+ * Gestion des Groupes (CRUD)
  */
 
 include __DIR__ . '/../../../../frontend/components/header.php';
@@ -101,7 +101,8 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#dataTableGroupes').DataTable({
       responsive: true,
       pageLength: 10,
-      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' }
+      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' },
+      order: [[0, 'desc']]
     });
   }, 500);
 });

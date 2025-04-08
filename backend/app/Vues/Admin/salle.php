@@ -1,7 +1,7 @@
 <?php
 /**
  * salle.php
- * Gestion des Salles (CRUD) sans session, SB Admin 2.
+ * Gestion des Salles (CRUD)
  */
 
 include __DIR__ . '/../../../../frontend/components/header.php';
@@ -87,7 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#dataTableSalles').DataTable({
       responsive: true,
       pageLength: 10,
-      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' }
+      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' },
+      order: [[0, 'desc']]
     });
   }, 500);
 });

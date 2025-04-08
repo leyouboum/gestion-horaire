@@ -47,7 +47,7 @@ class HoraireController
 
     /**
      * Renvoie les filtres disponibles pour un groupe (sites, cours, salles).
-     * Paramètre GET requis : group_id.
+     * 
      */
     public function getFilters(): void
     {

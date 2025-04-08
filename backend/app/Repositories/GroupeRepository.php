@@ -45,7 +45,7 @@ class GroupeRepository {
      * Récupère tous les groupes avec leurs sites associés.
      */
     public function getAll(): array {
-        $sql = "SELECT * FROM groupe ORDER BY id_groupe ASC";
+        $sql = "SELECT * FROM groupe ORDER BY id_groupe DESC";
         $stmt = $this->pdo->query($sql);
         $groups = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 

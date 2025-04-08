@@ -1,9 +1,4 @@
 <?php
-/**
- * activite.php
- * Affichage complet du Journal d'Activité (audit_log)
- */
-
 // Inclusion de la connexion à la base de données
 require_once __DIR__ . '/../../../config/database.php';
 
@@ -99,7 +94,8 @@ $(document).ready(function() {
         pageLength: 10,
         language: {
             url: '../../../../frontend/assets/vendor/datatables/French.json'
-        }
+        },
+        order: [[0, 'desc']]
     });
 });
 </script>

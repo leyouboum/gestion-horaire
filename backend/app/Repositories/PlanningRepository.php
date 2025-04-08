@@ -46,7 +46,7 @@ class PlanningRepository
             JOIN site st ON st.id_site = s.id_site
             JOIN cours c ON c.id_cours = p.id_cours
             JOIN groupe g ON g.id_groupe = p.id_groupe
-            ORDER BY p.date_heure_debut ASC
+            ORDER BY p.date_heure_debut DESC
         ";
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

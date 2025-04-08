@@ -1,7 +1,7 @@
 <?php
 /**
  * materiel.php
- * Gestion du Matériel (CRUD) sans sessions, SB Admin 2.
+ * Gestion du Matériel (CRUD)
  */
 
 include __DIR__ . '/../../../../frontend/components/header.php';
@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#dataTableMateriel').DataTable({
       responsive: true,
       pageLength: 10,
-      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' }
+      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' },
+      order: [[0, 'desc']]
     });
   }, 500);
 });

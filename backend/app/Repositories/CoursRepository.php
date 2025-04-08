@@ -20,11 +20,14 @@ class CoursRepository {
      */
     public function getAllCours(): array {
         $sql = "
-            SELECT c.*, GROUP_CONCAT(s.nom SEPARATOR ', ') AS sites 
+            SELECT c.*, 
+            GROUP_CONCAT(s.id_site SEPARATOR ',') AS siteIds,
+            GROUP_CONCAT(s.nom SEPARATOR ', ') AS sites 
             FROM cours c 
             LEFT JOIN cours_site cs ON c.id_cours = cs.id_cours 
             LEFT JOIN site s ON cs.id_site = s.id_site 
             GROUP BY c.id_cours
+            ORDER BY c.id_cours DESC
         ";
         $stmt = $this->pdo->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];

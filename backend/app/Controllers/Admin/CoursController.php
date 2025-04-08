@@ -32,7 +32,7 @@ class CoursController {
     }
 
     /**
-     * Crée un nouveau cours.
+     * Crée un nouveau cour.
      *
      * @param array $data
      * @return bool
@@ -63,7 +63,7 @@ class CoursController {
     }
 
     /**
-     * Retourne les cours associés à un site.
+     * Renvoi les cours associés à un site.
      *
      * @param int $idSite
      * @return array
@@ -84,7 +84,7 @@ class CoursController {
     }
 
     /**
-     * Retire l'association d'un cours à un groupe.
+     * Retrait de  l'association d'un cours à un groupe.
      *
      * @param int $coursId
      * @param int $groupId

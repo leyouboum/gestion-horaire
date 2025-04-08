@@ -1,8 +1,7 @@
 <?php
 /**
  * site.php
- * Gestion des Sites Universitaires (CRUD), sans session.
- * Utilise SB Admin 2 + dataTables.
+ * Gestion des Sites Universitaires (CRUD)
  */
 
 // Inclusion du header (ouvre <html>, <head>, <body>, <div id="wrapper">)
@@ -154,7 +153,8 @@ function initDataTable() {
       pageLength: 10,
       language: {
         url: '../../../../frontend/assets/vendor/datatables/French.json'
-      }
+      },
+      order: [[0, 'desc']]
     });
   }, 200);
 }

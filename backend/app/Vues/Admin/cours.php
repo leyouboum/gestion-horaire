@@ -1,7 +1,7 @@
 <?php
 /**
  * cours.php
- * Gestion des Cours (CRUD) sans sessions ni triggers, avec SB Admin 2.
+ * Gestion des Cours (CRUD)
  */
 
 // Inclusion du header (qui ouvre <html>, <head>, <body>, <div id="wrapper">)
@@ -95,17 +95,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('coursForm').addEventListener('submit', handleCoursFormSubmit);
   document.getElementById('btnCancel').addEventListener('click', resetCoursForm);
 
-  // Initialisation DataTable après un léger délai
+  // Initialisation DataTable avec tri décroissant sur la première colonne (ID)
   setTimeout(() => {
     $('#dataTableCours').DataTable({
       responsive: true,
       pageLength: 10,
-      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' }
+      language: { url: '../../../../frontend/assets/vendor/datatables/French.json' },
+      order: [[0, 'desc']]
     });
   }, 500);
 });
 
-// Chargement des cours
+// Chargement des cours depuis l'API
 async function loadCours() {
   try {
     const res = await fetch('../../../routes/admin-api.php?entity=cours&action=list');
@@ -117,7 +118,7 @@ async function loadCours() {
   }
 }
 
-// Chargement des sites pour remplir le select multiple
+// Chargement des sites pour remplir le sélecteur multiple
 async function loadSites() {
   try {
     const res = await fetch('../../../routes/admin-api.php?entity=sites&action=list');
@@ -144,6 +145,7 @@ function renderCours(data) {
     return;
   }
   data.forEach(c => {
+    // On suppose que le repository renvoie aussi "sites" et "siteIds"
     const sitesText = c.sites ? sanitize(c.sites) : "";
     const row = document.createElement('tr');
     row.innerHTML = `
@@ -154,7 +156,16 @@ function renderCours(data) {
       <td>${sanitize(c.details || "")}</td>
       <td>${c.duree}</td>
       <td>
-        <button class="btn btn-warning btn-sm me-1" onclick="editCours(${c.id_cours}, '${sanitize(c.code_cours)}', '${sanitize(c.nom_cours)}', '${sanitize(c.details || "")}', ${c.duree}, '${sanitize(c.sites || "")}')">
+        <button class="btn btn-warning btn-sm me-1" 
+          onclick="editCours(
+            ${c.id_cours}, 
+            '${sanitize(c.code_cours)}', 
+            '${sanitize(c.nom_cours)}', 
+            '${sanitize(c.details || "")}', 
+            ${c.duree}, 
+            '${sanitize(c.siteIds || "")}', 
+            '${sanitize(c.sites || "")}'
+          )">
           <i class="fas fa-edit"></i> Modifier
         </button>
         <button class="btn btn-danger btn-sm" onclick="deleteCours(${c.id_cours})">
@@ -206,8 +217,13 @@ async function handleCoursFormSubmit() {
   }
 }
 
-// Préremplir le formulaire en vue d'une modification
-function editCours(id, code, nom, details, duree, sitesStr) {
+/**
+ * Fonction modifiée pour pré-sélectionner dans le <select multiple> les sites déjà associés.
+ * On attend maintenant deux paramètres pour les sites :
+ * - siteIdsStr : une chaîne de caractères contenant les ID des sites associés (séparés par une virgule)
+ * - sitesStr    : la chaîne des noms, pour l'affichage (facultatif)
+ */
+function editCours(id, code, nom, details, duree, siteIdsStr, sitesStr) {
   document.getElementById('id_cours').value = id;
   document.getElementById('code_cours').value = code;
   document.getElementById('nom_cours').value = nom;
@@ -215,11 +231,14 @@ function editCours(id, code, nom, details, duree, sitesStr) {
   document.getElementById('duree').value = duree;
 
   const sitesSelect = document.getElementById('sites');
-  Array.from(sitesSelect.options).forEach(opt => (opt.selected = false));
-  if (sitesStr) {
-    const siteIds = sitesStr.split(',').map(s => s.trim());
+  // Réinitialiser la sélection
+  Array.from(sitesSelect.options).forEach(opt => opt.selected = false);
+  if (siteIdsStr) {
+    const siteIds = siteIdsStr.split(',').map(s => s.trim());
     Array.from(sitesSelect.options).forEach(opt => {
-      if (siteIds.includes(opt.value)) opt.selected = true;
+      if (siteIds.includes(opt.value)) {
+        opt.selected = true;
+      }
     });
   }
 
@@ -253,7 +272,7 @@ function resetCoursForm() {
   document.getElementById('duree').value = '1';
   
   const sitesSelect = document.getElementById('sites');
-  Array.from(sitesSelect.options).forEach(opt => (opt.selected = false));
+  Array.from(sitesSelect.options).forEach(opt => opt.selected = false);
 
   document.getElementById('formTitle').textContent = "Ajouter un Cours";
   document.getElementById('btnSubmit').textContent = "Enregistrer";

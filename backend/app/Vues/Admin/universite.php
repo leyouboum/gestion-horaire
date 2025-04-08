@@ -118,7 +118,8 @@ function initDataTable() {
       pageLength: 10,
       language: {
         url: '../../../../frontend/assets/vendor/datatables/French.json'
-      }
+      },
+      order: [[0, 'desc']]
     });
   }, 200);
 }
