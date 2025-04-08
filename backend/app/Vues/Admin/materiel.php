@@ -84,16 +84,20 @@ include __DIR__ . '/../../../../frontend/components/sidebar.php';
 let sallesDisponibles = {};
 let affectationSiteMap = {};
 
+// Au chargement de la page
 document.addEventListener('DOMContentLoaded', () => {
   loadSitesAffectation();
   loadMateriel();
+
   document.getElementById('materielForm').addEventListener('submit', handleMaterielFormSubmit);
   document.getElementById('btnCancel').addEventListener('click', resetMaterielForm);
   document.getElementById('is_mobile').addEventListener('change', toggleSalleFixe);
   document.getElementById('affectation_site').addEventListener('change', () => {
     loadSallesBySite(document.getElementById('affectation_site').value);
   });
+
   toggleSalleFixe();
+
   setTimeout(() => {
     $('#dataTableMateriel').DataTable({
       responsive: true,
@@ -122,6 +126,7 @@ async function loadSitesAffectation() {
   }
 }
 
+// Charger la liste des salles pour un site donné
 async function loadSallesBySite(siteId) {
   const select = document.getElementById('id_salle_fixe');
   select.innerHTML = '<option value="">-- Aucune --</option>';
@@ -142,6 +147,7 @@ async function loadSallesBySite(siteId) {
   }
 }
 
+// Afficher / masquer le bloc Salle Fixe selon is_mobile
 function toggleSalleFixe() {
   const isMobile = document.getElementById('is_mobile').checked;
   document.getElementById('salleFixeContainer').style.display = isMobile ? 'none' : 'block';
@@ -159,6 +165,7 @@ async function loadMateriel() {
   }
 }
 
+// Affiche la liste des matériels dans le tableau
 function renderMateriel(data) {
   const tbody = document.getElementById('materielBody');
   tbody.innerHTML = '';
@@ -167,9 +174,10 @@ function renderMateriel(data) {
     return;
   }
   data.forEach(m => {
-    // Affichage de la salle fixe à partir de la colonne jointe "salle_fixe"
+    // S'il est mobile, on n'affiche pas la salle
     const salleText = m.is_mobile ? '-' : (m.salle_fixe ? sanitize(m.salle_fixe) : '-');
     const siteAffectation = m.site_affectation ? sanitize(m.site_affectation) : '-';
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${m.id_materiel}</td>
@@ -178,7 +186,8 @@ function renderMateriel(data) {
       <td>${salleText}</td>
       <td>${siteAffectation}</td>
       <td>
-        <button class="btn btn-warning btn-sm me-1" onclick="editMateriel(${m.id_materiel}, '${sanitize(m.type_materiel)}', ${m.is_mobile}, ${m.id_salle_fixe || 'null'}, ${m.id_site_affectation || 'null'})">
+        <button class="btn btn-warning btn-sm me-1"
+          onclick="editMateriel(${m.id_materiel}, '${sanitize(m.type_materiel)}', ${m.is_mobile}, ${m.id_salle_fixe || 'null'}, ${m.id_site_affectation || 'null'})">
           <i class="fas fa-edit"></i> Modifier
         </button>
         <button class="btn btn-danger btn-sm" onclick="deleteMateriel(${m.id_materiel})">
@@ -190,7 +199,34 @@ function renderMateriel(data) {
   });
 }
 
-// Soumission du formulaire Matériel
+// Remplir le formulaire pour modification
+function editMateriel(id, type, isMobile, salleFixe, siteAffectation) {
+  document.getElementById('id_materiel').value = id;
+  document.getElementById('type_materiel').value = type;
+  document.getElementById('is_mobile').checked = isMobile;
+
+  // Assigner le site dans la liste
+  document.getElementById('affectation_site').value = siteAffectation || '';
+  
+  // Si ce n'est pas mobile, on charge la liste des salles du site (si siteAffectation est défini)
+  if (!isMobile && siteAffectation) {
+    loadSallesBySite(siteAffectation).then(() => {
+      // Quand les salles sont chargées, on peut sélectionner la bonne salle
+      document.getElementById('id_salle_fixe').value = salleFixe || '';
+    });
+  } else {
+    // Matériel mobile ou pas de site
+    document.getElementById('id_salle_fixe').innerHTML = '<option value="">-- Aucune --</option>';
+  }
+
+  toggleSalleFixe();
+
+  document.getElementById('formTitle').textContent = "Modifier le Matériel";
+  document.getElementById('btnSubmit').textContent = "Enregistrer";
+  document.getElementById('btnCancel').style.display = "inline-block";
+}
+
+// Soumission du formulaire Matériel (CREATE ou UPDATE)
 async function handleMaterielFormSubmit() {
   const id_materiel = document.getElementById('id_materiel').value;
   const type_materiel = document.getElementById('type_materiel').value.trim();
@@ -211,8 +247,10 @@ async function handleMaterielFormSubmit() {
   const payload = {
     type_materiel,
     is_mobile,
-    id_salle_fixe: id_salle_fixe,
-    id_site_affectation: is_mobile && affectationSite ? parseInt(affectationSite, 10) : null
+    id_salle_fixe,
+    // N'affecte le site que s'il est mobile et qu'on a un site
+    // (ou si vous voulez l'autoriser même pour le fixe, à vous de voir)
+    id_site_affectation: affectationSite ? parseInt(affectationSite, 10) : null
   };
 
   const method = id_materiel ? 'PUT' : 'POST';
@@ -238,25 +276,7 @@ async function handleMaterielFormSubmit() {
   }
 }
 
-// Remplir le formulaire pour modification
-function editMateriel(id, type, isMobile, salleFixe, siteAffectation) {
-  document.getElementById('id_materiel').value = id;
-  document.getElementById('type_materiel').value = type;
-  document.getElementById('is_mobile').checked = isMobile;
-  if (isMobile) {
-    document.getElementById('affectation_site').value = siteAffectation || '';
-  } else {
-    document.getElementById('affectation_site').value = siteAffectation || '';
-    document.getElementById('id_salle_fixe').value = salleFixe || '';
-  }
-  toggleSalleFixe();
-
-  document.getElementById('formTitle').textContent = "Modifier le Matériel";
-  document.getElementById('btnSubmit').textContent = "Enregistrer";
-  document.getElementById('btnCancel').style.display = "inline-block";
-}
-
-// Suppression d'un matériel
+// Supprimer un matériel
 async function deleteMateriel(id) {
   if (!confirm("Voulez-vous supprimer ce matériel ?")) return;
   try {
@@ -286,7 +306,7 @@ function resetMaterielForm() {
   toggleSalleFixe();
 }
 
-// Messages d'alerte
+// Afficher un message temporaire (success/danger)
 function showMaterielMessage(msg, type) {
   const alertDiv = document.getElementById('alertMsg');
   alertDiv.textContent = msg;
@@ -295,11 +315,16 @@ function showMaterielMessage(msg, type) {
   setTimeout(() => { alertDiv.style.display = 'none'; }, 3000);
 }
 
+// Échapper les caractères spéciaux pour éviter XSS
 function sanitize(str) {
   if (typeof str !== 'string') return str;
   const map = {
-    '&': '&amp;', '<': '&lt;', '>': '&gt;',
-    '"': '&quot;', "'": '&#39;', '`': '&#96;'
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+    '`': '&#96;'
   };
   return str.replace(/[&<>"'`]/g, m => map[m]);
 }
