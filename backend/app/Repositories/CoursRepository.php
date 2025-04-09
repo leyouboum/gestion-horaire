@@ -46,7 +46,7 @@ class CoursRepository {
             LEFT JOIN cours_site cs ON c.id_cours = cs.id_cours
             LEFT JOIN site s ON cs.id_site = s.id_site
             WHERE c.id_cours = ?
-            GROUP BY c.id_cours
+            GROUP BY c.id_cours LIMIT 1
         ";
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([$id]);
@@ -111,7 +111,7 @@ class CoursRepository {
             $coursId = (int)$this->pdo->lastInsertId();
             if (isset($data['sites']) && is_array($data['sites'])) {
                 foreach ($data['sites'] as $siteId) {
-                    $stmtAssign = $this->pdo->prepare("INSERT INTO cours_site (id_cours, id_site) VALUES (?, ?)");
+                    $stmtAssign = $this->pdo->prepare("INSERT IGNORE INTO cours_site (id_cours, id_site) VALUES (?, ?)");
                     $stmtAssign->execute([$coursId, $siteId]);
                 }
             }
@@ -140,7 +140,7 @@ class CoursRepository {
             $stmtDel->execute([$id]);
             if (isset($data['sites']) && is_array($data['sites'])) {
                 foreach ($data['sites'] as $siteId) {
-                    $stmtAssign = $this->pdo->prepare("INSERT INTO cours_site (id_cours, id_site) VALUES (?, ?)");
+                    $stmtAssign = $this->pdo->prepare("INSERT IGNORE INTO cours_site (id_cours, id_site) VALUES (?, ?)");
                     $stmtAssign->execute([$id, $siteId]);
                 }
             }
