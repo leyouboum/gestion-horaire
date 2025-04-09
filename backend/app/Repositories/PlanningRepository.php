@@ -7,22 +7,19 @@ use PDO;
 use PDOException;
 use app\Config\Database;
 
-class PlanningRepository
-{
+class PlanningRepository {
     protected PDO $pdo;
-    // Temps de déplacement minimum en secondes (1 heure)
+    // Temps de déplacement minimum en secondes (1 heure = 3600 sec)
     private int $travelTime = 3600;
 
-    public function __construct()
-    {
+    public function __construct() {
         $this->pdo = Database::getConnection();
     }
 
     /**
-     * Récupère tous les plannings avec jointures pour retourner les noms.
+     * Récupère tous les plannings avec jointures pour retourner les noms et nouveaux champs.
      */
-    public function getAll(): array
-    {
+    public function getAll(): array {
         $sql = "
             SELECT 
                 p.id_planning,
@@ -31,7 +28,8 @@ class PlanningRepository
                 p.id_groupe,
                 p.date_heure_debut,
                 p.date_heure_fin,
-                p.annee_academique,
+                p.id_annee,
+                p.statut,
                 s.id_site,
                 s.nom_salle,
                 st.nom AS site_name,
@@ -55,8 +53,7 @@ class PlanningRepository
     /**
      * Vérifie si un conflit existe pour la salle OU le groupe sur la période donnée.
      */
-    private function hasConflict(array $data, ?int $excludeId = null): bool
-    {
+    private function hasConflict(array $data, ?int $excludeId = null): bool {
         $excludeId = $excludeId ?? 0;
         $sql = "
             SELECT COUNT(*) AS cnt
@@ -85,23 +82,21 @@ class PlanningRepository
 
     /**
      * Vérifie le temps de déplacement pour le groupe.
-     * Pour le même groupe, si le site de la nouvelle séance est différent de celui d'une séance précédente ou suivante,
-     * vérifie que l'intervalle de temps est au moins égal au temps de déplacement requis.
+     * Vérifie que l'intervalle entre la séance précédente/suivante et la nouvelle est suffisant si les sites diffèrent.
      */
-    private function hasTravelTimeConflict(array $data, ?int $excludeId = null): bool
-    {
-        // Récupérer l'ID du site associé à la salle du nouveau planning
+    private function hasTravelTimeConflict(array $data, ?int $excludeId = null): bool {
+        // Récupérer l'ID du site associé à la salle du nouveau planning.
         $stmt = $this->pdo->prepare("SELECT id_site FROM salle WHERE id_salle = ?");
         $stmt->execute([$data['id_salle']]);
         $newSite = $stmt->fetchColumn();
         if (!$newSite) {
-            return true; // Considérer un conflit si la salle est introuvée
+            return true; // Conflit si la salle n'est pas trouvée.
         }
 
         $newStart = strtotime($data['date_heure_debut']);
         $newEnd   = strtotime($data['date_heure_fin']);
 
-        // Vérifier le planning précédent pour ce groupe
+        // Vérifier le planning précédent pour ce groupe.
         $sqlPrev = "
             SELECT s.id_site, p.date_heure_fin 
             FROM planning p
@@ -132,7 +127,7 @@ class PlanningRepository
             }
         }
 
-        // Vérifier le planning suivant pour ce groupe
+        // Vérifier le planning suivant pour ce groupe.
         $sqlNext = "
             SELECT s.id_site, p.date_heure_debut 
             FROM planning p
@@ -166,10 +161,9 @@ class PlanningRepository
     }
 
     /**
-     * Récupère le planning d'un groupe, filtré par période, avec jointures pour récupérer les noms et le matériel associé.
+     * Récupère le planning d'un groupe, filtré par période (optionnel), avec jointures pour récupérer noms et matériels.
      */
-    public function getPlanningByGroup(int $groupId, ?string $startDate = null, ?string $endDate = null): array
-    {
+    public function getPlanningByGroup(int $groupId, ?string $startDate = null, ?string $endDate = null): array {
         $sql = "
             SELECT 
                 p.id_planning,
@@ -178,7 +172,8 @@ class PlanningRepository
                 p.id_groupe,
                 p.date_heure_debut,
                 p.date_heure_fin,
-                p.annee_academique,
+                p.id_annee,
+                p.statut,
                 c.nom_cours,
                 s.nom_salle,
                 st.nom AS site_name,
@@ -211,7 +206,63 @@ class PlanningRepository
         $sql .= "
             GROUP BY 
                 p.id_planning, p.id_salle, p.id_cours, p.id_groupe,
-                p.date_heure_debut, p.date_heure_fin, p.annee_academique,
+                p.date_heure_debut, p.date_heure_fin, p.id_annee, p.statut,
+                c.nom_cours, s.nom_salle, st.nom, g.nom_groupe
+            ORDER BY p.date_heure_debut ASC
+        ";
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Nouvelle méthode : Récupère le planning d'un groupe pour une année académique spécifique,
+     * avec les mêmes jointures et options de filtrage.
+     */
+    public function getPlanningByGroupAndAnnee(int $groupId, int $anneeId, ?string $startDate = null, ?string $endDate = null): array {
+        $sql = "
+            SELECT 
+                p.id_planning,
+                p.id_salle,
+                p.id_cours,
+                p.id_groupe,
+                p.date_heure_debut,
+                p.date_heure_fin,
+                p.id_annee,
+                p.statut,
+                c.nom_cours,
+                s.nom_salle,
+                st.nom AS site_name,
+                g.nom_groupe,
+                GROUP_CONCAT(DISTINCT m.type_materiel ORDER BY m.type_materiel SEPARATOR ', ') AS materiels_fixes,
+                GROUP_CONCAT(DISTINCT mobile.type_materiel ORDER BY mobile.type_materiel SEPARATOR ', ') AS materiels_mobiles
+            FROM planning p
+            JOIN cours c ON c.id_cours = p.id_cours
+            JOIN salle s ON s.id_salle = p.id_salle
+            JOIN site st ON st.id_site = s.id_site
+            JOIN groupe g ON g.id_groupe = p.id_groupe
+            LEFT JOIN cours_materiel cm ON cm.id_cours = c.id_cours
+            LEFT JOIN materiel m ON m.id_materiel = cm.id_materiel AND m.is_mobile = 0
+            LEFT JOIN materiel_affectation ma ON ma.id_planning = p.id_planning
+            LEFT JOIN materiel mobile ON mobile.id_materiel = ma.id_materiel AND mobile.is_mobile = 1
+            WHERE p.id_groupe = ? AND p.id_annee = ?
+        ";
+        $params = [$groupId, $anneeId];
+        if ($startDate && $endDate) {
+            $sql .= " AND p.date_heure_debut BETWEEN ? AND ?";
+            $params[] = $startDate;
+            $params[] = $endDate;
+        } elseif ($startDate) {
+            $sql .= " AND p.date_heure_debut >= ?";
+            $params[] = $startDate;
+        } elseif ($endDate) {
+            $sql .= " AND p.date_heure_debut <= ?";
+            $params[] = $endDate;
+        }
+        $sql .= "
+            GROUP BY 
+                p.id_planning, p.id_salle, p.id_cours, p.id_groupe,
+                p.date_heure_debut, p.date_heure_fin, p.id_annee, p.statut,
                 c.nom_cours, s.nom_salle, st.nom, g.nom_groupe
             ORDER BY p.date_heure_debut ASC
         ";
@@ -223,8 +274,7 @@ class PlanningRepository
     /**
      * Récupère un planning via son ID.
      */
-    public function getPlanningById(int $id): ?array
-    {
+    public function getPlanningById(int $id): ?array {
         $stmt = $this->pdo->prepare("SELECT * FROM planning WHERE id_planning = ?");
         $stmt->execute([$id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -232,21 +282,23 @@ class PlanningRepository
     }
 
     /**
-     * Crée un nouveau planning avec vérification de conflit, du temps de déplacement,
-     * et affecte le matériel mobile si fourni.
+     * Crée un nouveau planning avec vérification des conflits et affectation du matériel mobile.
+     * Expects $data avec :
+     * - id_salle, id_cours, id_groupe, date_heure_debut, date_heure_fin, id_annee,
+     * - facultativement statut (sinon 'planifie'),
+     * - facultativement materiel_mobile (tableau d'IDs de matériel mobile)
      */
-    public function createPlanning(array $data): bool
-    {
+    public function createPlanning(array $data): bool {
         if ($this->hasConflict($data)) {
             return false;
         }
         if ($this->hasTravelTimeConflict($data)) {
             return false;
         }
-        // Insertion du planning
+        $statut = $data['statut'] ?? 'planifie';
         $sql = "
-            INSERT INTO planning (id_salle, id_cours, id_groupe, date_heure_debut, date_heure_fin, annee_academique)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO planning (id_salle, id_cours, id_groupe, date_heure_debut, date_heure_fin, id_annee, statut)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ";
         $stmt = $this->pdo->prepare($sql);
         $res = $stmt->execute([
@@ -255,15 +307,14 @@ class PlanningRepository
             $data['id_groupe'],
             $data['date_heure_debut'],
             $data['date_heure_fin'],
-            $data['annee_academique']
+            $data['id_annee'],
+            $statut
         ]);
         if (!$res) {
             return false;
         }
-        // Récupérer l'ID du planning inséré
         $planningId = (int)$this->pdo->lastInsertId();
 
-        // Si du matériel mobile est fourni, insérer les affectations
         if (isset($data['materiel_mobile']) && is_array($data['materiel_mobile'])) {
             $sqlAffect = "INSERT INTO materiel_affectation (id_materiel, id_planning, date_heure_debut, date_heure_fin) VALUES (?, ?, ?, ?)";
             $stmtAffect = $this->pdo->prepare($sqlAffect);
@@ -280,20 +331,19 @@ class PlanningRepository
     }
 
     /**
-     * Met à jour un planning avec vérification de conflit, du temps de déplacement,
-     * et met à jour l'affectation du matériel mobile.
+     * Met à jour un planning avec vérification des conflits et mise à jour de l'affectation du matériel mobile.
      */
-    public function updatePlanning(int $id, array $data): bool
-    {
+    public function updatePlanning(int $id, array $data): bool {
         if ($this->hasConflict($data, $id)) {
             return false;
         }
         if ($this->hasTravelTimeConflict($data, $id)) {
             return false;
         }
+        $statut = $data['statut'] ?? 'planifie';
         $sql = "
             UPDATE planning 
-            SET id_salle = ?, id_cours = ?, id_groupe = ?, date_heure_debut = ?, date_heure_fin = ?, annee_academique = ?
+            SET id_salle = ?, id_cours = ?, id_groupe = ?, date_heure_debut = ?, date_heure_fin = ?, id_annee = ?, statut = ?
             WHERE id_planning = ?
         ";
         $stmt = $this->pdo->prepare($sql);
@@ -303,17 +353,15 @@ class PlanningRepository
             $data['id_groupe'],
             $data['date_heure_debut'],
             $data['date_heure_fin'],
-            $data['annee_academique'],
+            $data['id_annee'],
+            $statut,
             $id
         ]);
         if (!$res) {
             return false;
         }
-        // Mise à jour de l'affectation du matériel mobile :
-        // On supprime d'abord les affectations existantes pour ce planning
         $stmtDel = $this->pdo->prepare("DELETE FROM materiel_affectation WHERE id_planning = ?");
         $stmtDel->execute([$id]);
-        // Puis on insère les nouvelles affectations si fournies
         if (isset($data['materiel_mobile']) && is_array($data['materiel_mobile'])) {
             $sqlAffect = "INSERT INTO materiel_affectation (id_materiel, id_planning, date_heure_debut, date_heure_fin) VALUES (?, ?, ?, ?)";
             $stmtAffect = $this->pdo->prepare($sqlAffect);
@@ -330,14 +378,11 @@ class PlanningRepository
     }
 
     /**
-     * Supprime un planning.
+     * Supprime un planning et les affectations de matériel mobile associées.
      */
-    public function deletePlanning(int $id): bool
-    {
-        // Supprimer les affectations de matériel mobile associées
+    public function deletePlanning(int $id): bool {
         $stmtDel = $this->pdo->prepare("DELETE FROM materiel_affectation WHERE id_planning = ?");
         $stmtDel->execute([$id]);
-
         $stmt = $this->pdo->prepare("DELETE FROM planning WHERE id_planning = ?");
         return $stmt->execute([$id]);
     }
