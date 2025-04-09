@@ -28,7 +28,10 @@ class MaterielController {
     }
 
     /**
-     * Retourne un matériel par son ID.
+     * Retourne un matériel par son identifiant.
+     *
+     * @param int $id
+     * @return array|null
      */
     public function getMateriel(int $id): ?array {
         return $this->materielRepo->getMaterielById($id);
@@ -63,7 +66,10 @@ class MaterielController {
     }
     
     /**
-     * Retourne la liste des matériels mobiles affectés à un site.
+     * Retourne les matériels mobiles affectés à un site.
+     *
+     * @param int $siteId
+     * @return array
      */
     public function listMobileMaterielBySite(int $siteId): array {
         return $this->materielRepo->getMobileMaterielBySite($siteId);

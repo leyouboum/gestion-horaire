@@ -22,7 +22,7 @@ class UniversiteController {
     }
 
     /**
-     * Retourne une université par son ID.
+     * Retourne une université par son identifiant.
      *
      * @param int $id
      * @return array|null
@@ -33,7 +33,6 @@ class UniversiteController {
 
     /**
      * Crée une nouvelle université.
-     * Renvoie false en cas de doublon.
      *
      * @param array $data
      * @return bool
@@ -44,7 +43,6 @@ class UniversiteController {
 
     /**
      * Met à jour une université existante.
-     * Renvoie false en cas de doublon.
      *
      * @param int $id
      * @param array $data

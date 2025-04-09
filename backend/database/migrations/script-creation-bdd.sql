@@ -1,5 +1,13 @@
 -- =========================================================
--- 1) Table universite
+-- Script complet de création de la base de données
+-- Projet : Gestion d'horaires universitaires
+-- Intégration des améliorations :
+--    4) Table annee_academique pour la gestion centralisée des années académiques
+--    5) Ajout du champ statut dans planning
+-- =========================================================
+
+-- =========================================================
+-- 1. Table universite
 -- =========================================================
 CREATE TABLE IF NOT EXISTS universite (
     id_universite INT AUTO_INCREMENT PRIMARY KEY,
@@ -8,7 +16,7 @@ CREATE TABLE IF NOT EXISTS universite (
 );
 
 -- =========================================================
--- 2) Table site
+-- 2. Table site
 -- Chaque site est rattaché à une université et possède sa plage horaire
 -- =========================================================
 CREATE TABLE IF NOT EXISTS site (
@@ -24,7 +32,7 @@ CREATE TABLE IF NOT EXISTS site (
 );
 
 -- =========================================================
--- 3) Table salle
+-- 3. Table salle
 -- Chaque salle est rattachée à un site et possède une capacité maximale
 -- =========================================================
 CREATE TABLE IF NOT EXISTS salle (
@@ -39,7 +47,7 @@ CREATE TABLE IF NOT EXISTS salle (
 );
 
 -- =========================================================
--- 4) Table materiel
+-- 4. Table materiel
 -- Le matériel peut être fixe (associé à une salle) ou mobile.
 -- Une colonne optionnelle permet d’affecter du matériel mobile à un site.
 -- =========================================================
@@ -58,7 +66,7 @@ CREATE TABLE IF NOT EXISTS materiel (
 );
 
 -- =========================================================
--- 5) Table cours
+-- 5. Table cours
 -- Le cours est défini par un nom, des éventuels détails, sa durée (par défaut 1h)
 -- et un code unique généré automatiquement pour les enregistrements existants.
 -- =========================================================
@@ -71,13 +79,8 @@ CREATE TABLE IF NOT EXISTS cours (
     CONSTRAINT unique_code_cours UNIQUE (code_cours)
 );
 
--- Remplissage du code_cours pour les enregistrements existants (si besoin)
-UPDATE cours
-  SET code_cours = CONCAT('COURSE_', id_cours)
-  WHERE code_cours = '';
-
 -- =========================================================
--- 6) Table cours_site
+-- 6. Table cours_site
 -- Indique sur quels sites un cours peut être proposé.
 -- =========================================================
 CREATE TABLE IF NOT EXISTS cours_site (
@@ -93,7 +96,7 @@ CREATE TABLE IF NOT EXISTS cours_site (
 );
 
 -- =========================================================
--- 7) Table cours_materiel
+-- 7. Table cours_materiel
 -- Un cours peut nécessiter plusieurs matériels.
 -- =========================================================
 CREATE TABLE IF NOT EXISTS cours_materiel (
@@ -109,7 +112,7 @@ CREATE TABLE IF NOT EXISTS cours_materiel (
 );
 
 -- =========================================================
--- 8) Table groupe
+-- 8. Table groupe
 -- Un groupe est défini par son nom, le nombre d'étudiants (entre 20 et 40) 
 -- et il est rattaché à une université.
 -- =========================================================
@@ -126,10 +129,10 @@ CREATE TABLE IF NOT EXISTS groupe (
 );
 
 -- =========================================================
--- 9) Table groupe_site
+-- 9. Table groupe_site
 -- Permet d'associer un groupe à un ou plusieurs sites.
 -- Le champ 'is_principal' indique le site principal du groupe.
--- (L'unicité du site principal pourra être vérifiée via la logique applicative.)
+-- (L'unicité du site principal devra être gérée via la logique applicative.)
 -- =========================================================
 CREATE TABLE IF NOT EXISTS groupe_site (
     id_groupe INT NOT NULL,
@@ -145,7 +148,7 @@ CREATE TABLE IF NOT EXISTS groupe_site (
 );
 
 -- =========================================================
--- 10) Table cours_groupe
+-- 10. Table cours_groupe
 -- Un cours peut être attribué à plusieurs groupes.
 -- =========================================================
 CREATE TABLE IF NOT EXISTS cours_groupe (
@@ -161,9 +164,22 @@ CREATE TABLE IF NOT EXISTS cours_groupe (
 );
 
 -- =========================================================
--- 11) Table planning
+-- 11. Table annee_academique
+-- Permet une gestion centralisée des années académiques
+-- =========================================================
+CREATE TABLE IF NOT EXISTS annee_academique (
+    id_annee INT AUTO_INCREMENT PRIMARY KEY,
+    libelle VARCHAR(20) NOT NULL, -- ex: "2024-2025"
+    date_debut DATE NOT NULL,
+    date_fin DATE NOT NULL,
+    CONSTRAINT unique_annee UNIQUE (libelle)
+);
+
+-- =========================================================
+-- 12. Table planning
 -- Chaque créneau planifié lie un cours, un groupe et une salle à un horaire donné,
 -- pour une année académique donnée.
+-- Intégration de l'amélioration : ajout de id_annee et du champ statut
 -- =========================================================
 CREATE TABLE IF NOT EXISTS planning (
     id_planning INT AUTO_INCREMENT PRIMARY KEY,
@@ -172,7 +188,8 @@ CREATE TABLE IF NOT EXISTS planning (
     id_groupe INT NOT NULL,
     date_heure_debut DATETIME NOT NULL,
     date_heure_fin DATETIME NOT NULL,
-    annee_academique VARCHAR(20) NOT NULL,
+    id_annee INT NOT NULL,
+    statut ENUM('planifie', 'annule', 'modifie', 'valide') DEFAULT 'planifie',
     CONSTRAINT FK_planning_salle FOREIGN KEY (id_salle)
         REFERENCES salle(id_salle)
         ON DELETE CASCADE,
@@ -182,19 +199,22 @@ CREATE TABLE IF NOT EXISTS planning (
     CONSTRAINT FK_planning_groupe FOREIGN KEY (id_groupe)
         REFERENCES groupe(id_groupe)
         ON DELETE CASCADE,
+    CONSTRAINT FK_planning_annee FOREIGN KEY (id_annee)
+        REFERENCES annee_academique(id_annee)
+        ON DELETE RESTRICT,
     INDEX idx_date_debut (date_heure_debut)
 );
 
 -- =========================================================
--- 12) Table deplacement
+-- 13. Table deplacement
 -- Permet de gérer le temps de déplacement entre deux sites.
--- On prévoit ici 60 minutes par défaut (mais la durée est stockée).
+-- On prévoit ici une durée en minutes (par exemple 60)
 -- =========================================================
 CREATE TABLE IF NOT EXISTS deplacement (
     id_deplacement INT AUTO_INCREMENT PRIMARY KEY,
     id_site_depart INT NOT NULL,
     id_site_arrivee INT NOT NULL,
-    duree INT NOT NULL, -- durée en minutes (par exemple 60)
+    duree INT NOT NULL, -- durée en minutes
     CONSTRAINT FK_deplacement_site_depart FOREIGN KEY (id_site_depart)
         REFERENCES site(id_site)
         ON DELETE CASCADE,
@@ -205,7 +225,7 @@ CREATE TABLE IF NOT EXISTS deplacement (
 );
 
 -- =========================================================
--- 13) Table materiel_affectation
+-- 14. Table materiel_affectation
 -- Permet d'affecter du matériel à un créneau planifié.
 -- =========================================================
 CREATE TABLE IF NOT EXISTS materiel_affectation (
@@ -223,9 +243,8 @@ CREATE TABLE IF NOT EXISTS materiel_affectation (
 );
 
 -- =========================================================
--- 14) Table audit_log
--- Suivi des opérations sur la base (insertion, modification, suppression).
--- Comme l'authentification n'est pas gérée, aucune donnée utilisateur n'est stockée.
+-- 15. Table audit_log
+-- Suivi des opérations sur la base (insertions, mises à jour, suppressions).
 -- =========================================================
 CREATE TABLE IF NOT EXISTS audit_log (
     id_audit INT AUTO_INCREMENT PRIMARY KEY,

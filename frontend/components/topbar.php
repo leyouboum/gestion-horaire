@@ -1,5 +1,4 @@
 <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-    <!-- Bouton pour reduire/toogle la sidebar sur petit écran -->
     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
         <i class="fa fa-bars"></i>
     </button>
@@ -36,8 +35,8 @@
       const searchButton = document.getElementById("navbarSearchButton");
       const searchInput = document.getElementById("navbarSearchInput");
       
-      // Quand on clique sur le bouton, on recupere le terme de recherche
-      searchButton.addEventListener("click", function() {
+      if (searchButton && searchInput) {
+        searchButton.addEventListener("click", function() {
           const query = searchInput.value.trim();
           if (query !== "") {
               // On redirige vers la page search.php avec le terme en parametre
@@ -52,5 +51,6 @@
               searchButton.click();
           }
       });
+    }
   });
 </script>
