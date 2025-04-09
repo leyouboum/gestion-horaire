@@ -16,7 +16,7 @@ class GroupeController
 
     /**
      * Renvoie les groupes associés à une université.
-     * 
+     * Paramètre GET requis : universite_id.
      */
     public function getGroupesByUniversite(): void
     {

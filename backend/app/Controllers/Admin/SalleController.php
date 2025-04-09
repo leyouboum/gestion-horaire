@@ -22,7 +22,7 @@ class SalleController {
     }
 
     /**
-     * Retourne une salle par son ID.
+     * Retourne une salle par son identifiant.
      *
      * @param int $id
      * @return array|null

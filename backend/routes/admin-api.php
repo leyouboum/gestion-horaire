@@ -14,6 +14,7 @@ require_once __DIR__.'/../app/Controllers/Admin/SalleController.php';
 require_once __DIR__.'/../app/Controllers/Admin/SiteController.php';
 require_once __DIR__.'/../app/Controllers/Admin/UniversiteController.php';
 require_once __DIR__.'/../app/Controllers/Admin/MaterielController.php';
+require_once __DIR__.'/../app/Controllers/Admin/AnneeAcademiqueController.php';
 
 // Repositories
 require_once __DIR__.'/../app/Repositories/CoursRepository.php';
@@ -23,6 +24,7 @@ require_once __DIR__.'/../app/Repositories/SalleRepository.php';
 require_once __DIR__.'/../app/Repositories/SiteRepository.php';
 require_once __DIR__.'/../app/Repositories/UniversiteRepository.php';
 require_once __DIR__.'/../app/Repositories/MaterielRepository.php';
+require_once __DIR__.'/../app/Repositories/AnneeAcademiqueRepository.php';
 
 // Models
 require_once __DIR__.'/../app/Models/Universite.php';
@@ -32,6 +34,8 @@ require_once __DIR__.'/../app/Models/Salle.php';
 require_once __DIR__.'/../app/Models/Groupe.php';
 require_once __DIR__.'/../app/Models/Planning.php';
 require_once __DIR__.'/../app/Models/Materiel.php';
+require_once __DIR__.'/../app/Models/AnneeAcademique.php';
+
 
 use app\Controllers\Admin\CoursController;
 use app\Controllers\Admin\GroupesController;
@@ -40,6 +44,7 @@ use app\Controllers\Admin\SalleController;
 use app\Controllers\Admin\SiteController;
 use app\Controllers\Admin\UniversiteController;
 use app\Controllers\Admin\MaterielController;
+use app\Controllers\Admin\AnneeAcademiqueController;
 
 $coursController       = new CoursController();
 $groupesController     = new GroupesController();
@@ -48,6 +53,7 @@ $salleController       = new SalleController();
 $siteController        = new SiteController();
 $universiteController  = new UniversiteController();
 $materielController    = new MaterielController();
+$anneeController       = new AnneeAcademiqueController();
 
 $entity = $_GET['entity'] ?? null;
 $action = $_GET['action'] ?? null;
@@ -206,21 +212,24 @@ try {
             switch ($method) {
                 case 'GET':
                     if ($action === 'list') {
-                        // Lister par groupId + éventuelles dates
+                        // Lister par groupId avec dates optionnelles ET possibilité de filtrer par année
                         if (isset($_GET['groupId']) && is_numeric($_GET['groupId'])) {
                             $groupId = (int) $_GET['groupId'];
                             $startDate = $_GET['startDate'] ?? null;
-                            $endDate   = $_GET['endDate']   ?? null;
-                            echo json_encode($planningController->listPlanningsByGroup($groupId, $startDate, $endDate));
+                            $endDate   = $_GET['endDate'] ?? null;
+                            if (isset($_GET['annee_id']) && is_numeric($_GET['annee_id'])) {
+                                $anneeId = (int) $_GET['annee_id'];
+                                echo json_encode($planningController->getPlanningByGroupAndAnnee($groupId, $anneeId, $startDate, $endDate));
+                            } else {
+                                echo json_encode($planningController->listPlanningsByGroup($groupId, $startDate, $endDate));
+                            }
                         } else {
                             http_response_code(400);
                             echo json_encode(["error" => "Le paramètre groupId est requis pour lister les plannings"]);
                         }
                     } elseif ($action === 'listAll') {
-                        // Liste complète de tous les plannings
                         echo json_encode($planningController->listAllPlannings());
                     } elseif ($action === 'get' && isset($_GET['id'])) {
-                        // Obtenir un planning par ID
                         $id = (int) $_GET['id'];
                         $result = $planningController->getPlanning($id);
                         if ($result) {
@@ -283,6 +292,7 @@ try {
                     echo json_encode(["error" => "Méthode non supportée pour 'planning'"]);
             }
             break;
+    
 
         case 'salles':
             switch ($method) {
@@ -571,6 +581,77 @@ try {
                     echo json_encode(["error" => "Méthode non supportée pour 'materiels'"]);
             }
             break;
+        
+        case 'annees':
+            switch ($method) {
+                case 'GET':
+                    if ($action === 'list') {
+                        // Récupère la liste complète des années académiques
+                        echo json_encode($anneeController->listAnnees());
+                    } elseif ($action === 'get' && isset($_GET['id'])) {
+                        $id = (int)$_GET['id'];
+                        $result = $anneeController->getAnnee($id);
+                        if ($result) {
+                            echo json_encode($result);
+                        } else {
+                            http_response_code(404);
+                            echo json_encode(["error" => "Année académique introuvable"]);
+                        }
+                    } else {
+                        http_response_code(400);
+                        echo json_encode(["error" => "Action GET non reconnue pour 'annees'"]);
+                    }
+                    break;
+                case 'POST':
+                    if ($action === 'create') {
+                        $data = json_decode(file_get_contents('php://input'), true);
+                        if ($data && $anneeController->createAnnee($data)) {
+                            http_response_code(201);
+                            echo json_encode(["message" => "Année académique créée avec succès"]);
+                        } else {
+                            http_response_code(500);
+                            echo json_encode(["error" => "Erreur lors de la création de l'année académique"]);
+                        }
+                    } else {
+                        http_response_code(400);
+                        echo json_encode(["error" => "Action POST non reconnue pour 'annees'"]);
+                    }
+                    break;
+                case 'PUT':
+                    if ($action === 'update' && isset($_GET['id'])) {
+                        $id = (int)$_GET['id'];
+                        $data = json_decode(file_get_contents('php://input'), true);
+                        if ($data && $anneeController->updateAnnee($id, $data)) {
+                            echo json_encode(["message" => "Année académique mise à jour"]);
+                        } else {
+                            http_response_code(500);
+                            echo json_encode(["error" => "Erreur lors de la mise à jour de l'année académique"]);
+                        }
+                    } else {
+                        http_response_code(400);
+                        echo json_encode(["error" => "Action PUT non reconnue pour 'annees'"]);
+                    }
+                    break;
+                case 'DELETE':
+                    if ($action === 'delete' && isset($_GET['id'])) {
+                        $id = (int)$_GET['id'];
+                        if ($anneeController->deleteAnnee($id)) {
+                            echo json_encode(["message" => "Année académique supprimée"]);
+                        } else {
+                            http_response_code(500);
+                            echo json_encode(["error" => "Erreur lors de la suppression de l'année académique"]);
+                        }
+                    } else {
+                        http_response_code(400);
+                        echo json_encode(["error" => "Action DELETE non reconnue pour 'annees'"]);
+                    }
+                    break;
+                default:
+                    http_response_code(405);
+                    echo json_encode(["error" => "Méthode non supportée pour 'annees'"]);
+            }
+            break;
+            
 
         default:
             http_response_code(400);

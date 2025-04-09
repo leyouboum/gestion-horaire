@@ -11,7 +11,8 @@ class Planning implements \JsonSerializable
     private int $id_groupe;
     private \DateTime $date_heure_debut;
     private \DateTime $date_heure_fin;
-    private string $annee_academique;
+    private int $id_annee;
+    private string $statut;
 
     public function __construct(
         ?int $id_planning,
@@ -20,7 +21,8 @@ class Planning implements \JsonSerializable
         int $id_groupe,
         \DateTime $date_heure_debut,
         \DateTime $date_heure_fin,
-        string $annee_academique
+        int $id_annee,
+        string $statut = 'planifie'
     ) {
         $this->id_planning = $id_planning;
         $this->id_salle = $id_salle;
@@ -28,7 +30,8 @@ class Planning implements \JsonSerializable
         $this->id_groupe = $id_groupe;
         $this->date_heure_debut = $date_heure_debut;
         $this->date_heure_fin = $date_heure_fin;
-        $this->annee_academique = $annee_academique;
+        $this->id_annee = $id_annee;
+        $this->statut = $statut;
     }
 
     public function getId(): ?int {
@@ -55,8 +58,12 @@ class Planning implements \JsonSerializable
         return $this->date_heure_fin;
     }
 
-    public function getAnneeAcademique(): string {
-        return $this->annee_academique;
+    public function getIdAnnee(): int {
+        return $this->id_annee;
+    }
+
+    public function getStatut(): string {
+        return $this->statut;
     }
 
     public function setIdSalle(int $idSalle): void {
@@ -79,8 +86,12 @@ class Planning implements \JsonSerializable
         $this->date_heure_fin = $dateFin;
     }
 
-    public function setAnneeAcademique(string $annee): void {
-        $this->annee_academique = $annee;
+    public function setIdAnnee(int $id_annee): void {
+        $this->id_annee = $id_annee;
+    }
+
+    public function setStatut(string $statut): void {
+        $this->statut = $statut;
     }
 
     public function jsonSerialize(): array {
@@ -91,7 +102,8 @@ class Planning implements \JsonSerializable
             'id_groupe'        => $this->id_groupe,
             'date_heure_debut' => $this->date_heure_debut->format('Y-m-d H:i:s'),
             'date_heure_fin'   => $this->date_heure_fin->format('Y-m-d H:i:s'),
-            'annee_academique' => $this->annee_academique,
+            'id_annee'         => $this->id_annee,
+            'statut'           => $this->statut,
         ];
     }
 }

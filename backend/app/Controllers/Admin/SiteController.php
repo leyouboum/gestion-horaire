@@ -22,7 +22,7 @@ class SiteController {
     }
 
     /**
-     * Retourne un site par son ID.
+     * Retourne un site par son identifiant.
      *
      * @param int $id
      * @return array|null
@@ -32,7 +32,7 @@ class SiteController {
     }
 
     /**
-     * Retourne les sites d'une université.
+     * Retourne les sites associés à une université.
      *
      * @param int $univId
      * @return array
