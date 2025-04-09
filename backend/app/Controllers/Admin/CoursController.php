@@ -13,7 +13,7 @@ class CoursController {
     }
 
     /**
-     * Retourne tous les cours.
+     * Retourne la liste de tous les cours.
      *
      * @return array
      */
@@ -22,7 +22,7 @@ class CoursController {
     }
 
     /**
-     * Retourne un cours par son ID.
+     * Retourne un cours par son identifiant.
      *
      * @param int $id
      * @return array|null
@@ -32,12 +32,13 @@ class CoursController {
     }
 
     /**
-     * Crée un nouveau cour.
+     * Crée un nouveau cours.
      *
      * @param array $data
      * @return bool
      */
     public function createCours(array $data): bool {
+        // Expects: 'nom_cours', 'details', 'duree', 'code_cours'
         return $this->coursRepo->createCours($data);
     }
 
@@ -63,7 +64,7 @@ class CoursController {
     }
 
     /**
-     * Renvoi les cours associés à un site.
+     * Retourne les cours associés à un site.
      *
      * @param int $idSite
      * @return array
@@ -84,7 +85,7 @@ class CoursController {
     }
 
     /**
-     * Retrait de  l'association d'un cours à un groupe.
+     * Retire l'association d'un cours à un groupe.
      *
      * @param int $coursId
      * @param int $groupId

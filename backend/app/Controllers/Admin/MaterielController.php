@@ -22,7 +22,7 @@ class MaterielController {
     }
 
     /**
-     * Retourne un matériel par son ID.
+     * Retourne un matériel par son identifiant.
      *
      * @param int $id
      * @return array|null
@@ -63,7 +63,7 @@ class MaterielController {
     }
     
     /**
-     * Retourne la liste des matériels mobiles affectés à un site.
+     * Retourne les matériels mobiles affectés à un site.
      *
      * @param int $siteId
      * @return array
