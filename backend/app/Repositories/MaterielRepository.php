@@ -13,9 +13,12 @@ class MaterielRepository {
         $this->pdo = Database::getConnection();
     }
 
-    /**
-     * Récupère tout le matériel, en joignant éventuellement le nom de la salle et le nom du site.
-     */
+   /**
+ * Récupère tout le matériel, en joignant éventuellement le nom de la salle et le nom du site.
+ *
+ * @return array
+ */
+
     public function getAllMateriel(): array {
         $sql = "
             SELECT m.*,
@@ -32,6 +35,9 @@ class MaterielRepository {
 
     /**
      * Récupère un seul matériel par ID, avec les mêmes champs que la liste.
+     *
+     * @param int $id
+     * @return array|null
      */
     public function getMaterielById(int $id): ?array {
         $sql = "
@@ -49,8 +55,11 @@ class MaterielRepository {
         return $result ?: null;
     }
 
-    /**
+     /**
      * Crée un nouveau matériel.
+     *
+     * @param array $data
+     * @return bool
      */
     public function createMateriel(array $data): bool {
         $sql = "INSERT INTO materiel (type_materiel, is_mobile, id_salle_fixe, id_site_affectation)
@@ -66,6 +75,10 @@ class MaterielRepository {
 
     /**
      * Met à jour un matériel existant.
+     *
+     * @param int $id
+     * @param array $data
+     * @return bool
      */
     public function updateMateriel(int $id, array $data): bool {
         $sql = "UPDATE materiel
@@ -84,16 +97,22 @@ class MaterielRepository {
         ]);
     }
 
-    /**
+     /**
      * Supprime un matériel.
+     *
+     * @param int $id
+     * @return bool
      */
     public function deleteMateriel(int $id): bool {
         $stmt = $this->pdo->prepare("DELETE FROM materiel WHERE id_materiel = ?");
         return $stmt->execute([$id]);
     }
 
-    /**
+     /**
      * Récupère le matériel fixe installé dans une salle donnée.
+     *
+     * @param int $idSalle
+     * @return array
      */
     public function getMaterielBySalle(int $idSalle): array {
         $stmt = $this->pdo->prepare("SELECT * FROM materiel WHERE id_salle_fixe = ?");
@@ -101,8 +120,11 @@ class MaterielRepository {
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
     }
     
-    /**
+     /**
      * Récupère le matériel mobile affecté à un site donné.
+     *
+     * @param int $siteId
+     * @return array
      */
     public function getMobileMaterielBySite(int $siteId): array {
         $sql = "SELECT * FROM materiel WHERE is_mobile = 1 AND id_site_affectation = ?";
