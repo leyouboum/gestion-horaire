@@ -29,7 +29,8 @@ class PlanningService {
                 (int)$row['id_groupe'],
                 new \DateTime($row['date_heure_debut']),
                 new \DateTime($row['date_heure_fin']),
-                $row['annee_academique']
+                (int)$row['id_annee'],         // Nouveau champ : id_annee
+                $row['statut']                // Nouveau champ : statut
             );
         }
         return $plannings;
@@ -37,8 +38,6 @@ class PlanningService {
 
     /**
      * Récupère le planning d'un groupe filtré par période.
-     * Ici, on retourne directement le résultat du repository, car le résultat
-     * inclut des jointures supplémentaires (noms de salle, site, cours, groupe, matériels, etc.).
      *
      * @param int $groupId
      * @param string|null $startDate
@@ -67,7 +66,8 @@ class PlanningService {
             (int)$data['id_groupe'],
             new \DateTime($data['date_heure_debut']),
             new \DateTime($data['date_heure_fin']),
-            $data['annee_academique']
+            (int)$data['id_annee'],  // Utilisation du nouvel identifiant d'année académique
+            $data['statut']         // Récupération du statut
         );
     }
 
@@ -78,6 +78,7 @@ class PlanningService {
      * @return bool
      */
     public function createPlanning(array $data): bool {
+        // On s'attend à ce que $data contienne désormais 'id_annee' et éventuellement 'statut'
         return $this->planningRepository->createPlanning($data);
     }
 
