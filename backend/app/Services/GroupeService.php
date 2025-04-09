@@ -46,8 +46,12 @@ class GroupeService {
     }
 
     public function updateGroup(int $id, array $data): bool {
+        if (empty($data['nom_groupe']) || empty($data['nb_etudiants'])) {
+            throw new \InvalidArgumentException("Les données de mise à jour sont incomplètes.");
+        }
         return $this->groupeRepository->update($id, $data);
     }
+    
 
     public function deleteGroup(int $id): bool {
         return $this->groupeRepository->delete($id);
