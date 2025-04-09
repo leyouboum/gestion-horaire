@@ -73,9 +73,12 @@ class SalleService {
      * @return bool
      */
     public function updateSalle(int $id, array $data): bool {
+        if (empty($data['id_site']) || empty($data['nom_salle']) || empty($data['capacite_max'])) {
+            throw new \InvalidArgumentException("Les informations de la salle sont incomplètes.");
+        }
         return $this->salleRepository->updateSalle($id, $data);
     }
-
+    
     /**
      * Supprime une salle.
      *
