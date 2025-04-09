@@ -30,6 +30,13 @@ require_once __DIR__ . '/../config.php';
             <span>Universités</span>
         </a>
     </li>
+    <!-- Nav Item - Années Académiques -->
+    <li class="nav-item">
+        <a class="nav-link" href="<?= $baseUrlBackend ?>Admin/annees.php">
+            <i class="fas fa-fw fa-calendar-alt"></i>
+            <span>Années Académiques</span>
+        </a>
+    </li>
 
     <hr class="sidebar-divider">
     <div class="sidebar-heading">Gestion Locale</div>
@@ -86,7 +93,7 @@ require_once __DIR__ . '/../config.php';
 
     <hr class="sidebar-divider d-none d-md-block">
 
-    <!-- Bouton "Sortir" pour quitter l'espace Admin -->
+    <!-- Bouton "Sortir" -->
     <li class="nav-item">
         <a class="nav-link" href="../../../../frontend/index.html" onclick="handleExit()">
             <i class="fas fa-fw fa-door-open"></i>
@@ -102,7 +109,7 @@ require_once __DIR__ . '/../config.php';
 
 <script>
 function handleExit() {
-    // Logique de confirmation avant de quitter le programme sur dashboard
-    alert("Etes vous sûr(e) de vouloir quitter le programme ?");
+    // Confirmation avant de quitter
+    alert("Etes-vous sûr(e) de vouloir quitter le programme ?");
 }
 </script>
