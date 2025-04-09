@@ -78,10 +78,12 @@ include __DIR__ . '/../../../../frontend/components/sidebar.php';
                   <input type="number" class="form-control" id="duration" value="1" min="1" />
                 </div>
               </div>
-              <!-- Année académique -->
+              <!-- Année académique (Select) -->
               <div class="col-12 col-md-6">
-                <label for="annee_academique" class="form-label">Année Académique</label>
-                <input type="text" class="form-control" id="annee_academique" value="2024-2025" required />
+                <label for="id_annee" class="form-label">Année Académique</label>
+                <select class="form-select" id="id_annee" required>
+                  <option value="">-- Sélectionnez une année académique --</option>
+                </select>
               </div>
               <!-- Répétition hebdomadaire -->
               <div class="col-12 col-md-6">
@@ -153,25 +155,24 @@ let sallesMap          = {};
 let coursMap           = {};
 let groupesMap         = {};
 let mobileMaterielMap  = {};
+let anneesMap          = {};
 
 // Au chargement
 document.addEventListener('DOMContentLoaded', () => {
   loadSites();
+  loadAnnees(); // Charge la liste des années académiques
   loadPlanning();
-  // Charger le matériel mobile "vide" au départ
   loadMobileMateriel(null);
 
   document.getElementById('id_site').addEventListener('change', onSiteChange);
   document.getElementById('planningForm').addEventListener('submit', handlePlanningFormSubmit);
   document.getElementById('btnCancel').addEventListener('click', resetPlanningForm);
 
-  // Gestion de la répétition hebdomadaire
   document.getElementById('repeatWeekly').addEventListener('change', () => {
     document.getElementById('repeatContainer').style.display 
       = document.getElementById('repeatWeekly').checked ? 'block' : 'none';
   });
 
-  // Gestion de la durée personnalisée
   document.getElementById('customDuration').addEventListener('change', () => {
     const show = document.getElementById('customDuration').checked;
     document.getElementById('durationContainer').style.display = show ? 'block' : 'none';
@@ -185,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('customDuration').checked) updateFinFromDuration();
   });
 
-  // Configuration de la DataTable
   setTimeout(() => {
     $('#dataTablePlanning').DataTable({
       responsive: true,
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 500);
 });
 
-// Charger la liste des sites pour le select principal
+// Charger les sites
 async function loadSites() {
   try {
     const response = await fetch('../../../routes/admin-api.php?entity=sites&action=list');
@@ -215,7 +215,26 @@ async function loadSites() {
   }
 }
 
-// Charger le matériel mobile d'un site spécifique
+// Charger les années académiques
+async function loadAnnees() {
+  try {
+    const response = await fetch('../../../routes/admin-api.php?entity=annees&action=list');
+    const data = await response.json();
+    const selectAnnee = document.getElementById('id_annee');
+    selectAnnee.innerHTML = '<option value="">-- Sélectionnez une année académique --</option>';
+    data.forEach(annee => {
+      anneesMap[annee.id_annee] = annee.libelle;
+      const opt = document.createElement('option');
+      opt.value = annee.id_annee;
+      opt.textContent = annee.libelle;
+      selectAnnee.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Erreur chargement années académiques:", err);
+  }
+}
+
+// Charger le matériel mobile d'un site
 async function loadMobileMateriel(siteId) {
   const select = document.getElementById('mobile_materiel');
   if (!siteId) {
@@ -246,7 +265,7 @@ async function loadMobileMateriel(siteId) {
   }
 }
 
-// Lorsqu'on change de site, charger salles, cours, groupes, et matériel mobile associés
+// Lorsqu'on change de site, charger salles, cours, groupes, et matériel mobile
 async function onSiteChange() {
   const siteId = document.getElementById('id_site').value;
   if (!siteId) {
@@ -269,7 +288,7 @@ async function onSiteChange() {
   }
 }
 
-// Charger les salles pour un site donné
+// Charger les salles pour un site
 async function loadSallesBySite(siteId) {
   try {
     const response = await fetch(`../../../routes/admin-api.php?entity=salles&action=listBySite&siteId=${siteId}`);
@@ -289,7 +308,7 @@ async function loadSallesBySite(siteId) {
   }
 }
 
-// Charger les cours pour un site donné
+// Charger les cours pour un site
 async function loadCoursBySite(siteId) {
   try {
     const response = await fetch(`../../../routes/admin-api.php?entity=cours&action=listBySite&siteId=${siteId}`);
@@ -309,7 +328,7 @@ async function loadCoursBySite(siteId) {
   }
 }
 
-// Charger les groupes pour un site donné
+// Charger les groupes pour un site
 async function loadGroupesBySite(siteId) {
   try {
     const response = await fetch(`../../../routes/admin-api.php?entity=groupes&action=listBySite&siteId=${siteId}`);
@@ -329,10 +348,9 @@ async function loadGroupesBySite(siteId) {
   }
 }
 
-// Charger la liste complète du planning
+// Charger le planning complet
 async function loadPlanning() {
   try {
-    // On utilise ici l'action "listAll" (à adapter si besoin)
     const response = await fetch('../../../routes/admin-api.php?entity=planning&action=listAll');
     const data = await response.json();
     renderPlanning(data);
@@ -350,19 +368,17 @@ function renderPlanning(data) {
     tbody.innerHTML = '<tr><td colspan="10" class="text-center">Aucune séance planifiée.</td></tr>';
     return;
   }
-
-  const now = new Date(); // Date/heure actuelle
+  const now = new Date();
   data.forEach(item => {
-    const nomSite   = item.site_name     || 'N/A';
-    const nomSalle  = item.nom_salle    || 'N/A';
-    const nomCours  = item.nom_cours    || 'N/A';
-    const nomGroupe = item.nom_groupe   || 'N/A';
-    const materiels = item.materiels    || '-';
+    const nomSite   = item.site_name || 'N/A';
+    const nomSalle  = item.nom_salle || 'N/A';
+    const nomCours  = item.nom_cours || 'N/A';
+    const nomGroupe = item.nom_groupe || 'N/A';
+    const materiels = item.materiels || '-';
+    const anneeLabel = anneesMap[item.id_annee] || sanitize(item.id_annee);
 
     const row = document.createElement('tr');
-    const startDate = new Date(item.date_heure_debut.replace(' ', 'T')); // "YYYY-MM-DD HH:MM:SS"
-    
-    // Si la date de début est déjà passée, on va désactiver le bouton "Modifier"
+    const startDate = new Date(item.date_heure_debut.replace(' ', 'T'));
     let disableEdit = (startDate <= now);
 
     row.innerHTML = `
@@ -373,7 +389,7 @@ function renderPlanning(data) {
       <td>${sanitize(nomGroupe)}</td>
       <td>${item.date_heure_debut}</td>
       <td>${item.date_heure_fin}</td>
-      <td>${sanitize(item.annee_academique)}</td>
+      <td>${sanitize(anneeLabel)}</td>
       <td>${sanitize(materiels)}</td>
       <td>
         <button class="btn btn-warning btn-sm me-1" 
@@ -385,7 +401,7 @@ function renderPlanning(data) {
             ${item.id_groupe}, 
             '${item.date_heure_debut.replace(' ', 'T')}', 
             '${item.date_heure_fin.replace(' ', 'T')}', 
-            '${sanitize(item.annee_academique)}'
+            '${sanitize(item.id_annee)}'
           )"
           ${disableEdit ? 'disabled' : ''}>
           <i class="fas fa-edit"></i> Modifier
@@ -400,20 +416,17 @@ function renderPlanning(data) {
 }
 
 // Préparer le formulaire pour une mise à jour
-async function editPlanning(id, siteId, salle, cours, groupe, debut, fin, annee) {
+async function editPlanning(id, siteId, salle, cours, groupe, debut, fin, id_annee) {
   document.getElementById('id_planning').value = id;
   document.getElementById('id_site').value = siteId;
-
-  await onSiteChange(); // charge salles, cours, groupes du site
-
+  await onSiteChange();
   document.getElementById('id_salle').value  = salle;
   document.getElementById('id_cours').value  = cours;
   document.getElementById('id_groupe').value = groupe;
   document.getElementById('date_heure_debut').value = debut;
   document.getElementById('date_heure_fin').value   = fin;
-  document.getElementById('annee_academique').value = annee;
+  document.getElementById('id_annee').value = id_annee;
   
-  // Désactive la durée personnalisée pour éviter toute interférence
   document.getElementById('customDuration').checked = false;
   document.getElementById('durationContainer').style.display = 'none';
 
@@ -448,14 +461,13 @@ function updateFinFromDuration() {
   const debutStr = document.getElementById('date_heure_debut').value;
   const duration = parseInt(document.getElementById('duration').value, 10);
   if (!debutStr || isNaN(duration)) return;
-  
   const debut = new Date(debutStr);
   const fin   = new Date(debut.getTime() + duration * 3600 * 1000);
   const formattedFin = fin.toISOString().slice(0,16);
   document.getElementById('date_heure_fin').value = formattedFin;
 }
 
-// Gestion de la soumission du formulaire (création / mise à jour)
+// Gestion de la soumission du formulaire (création/mise à jour)
 function handlePlanningFormSubmit() {
   const id_planning = document.getElementById('id_planning').value;
   const id_site     = document.getElementById('id_site').value;
@@ -464,35 +476,29 @@ function handlePlanningFormSubmit() {
   const id_groupe   = document.getElementById('id_groupe').value;
   const dateDebut   = document.getElementById('date_heure_debut').value;
   let dateFin       = document.getElementById('date_heure_fin').value;
-  const annee       = document.getElementById('annee_academique').value.trim();
+  const id_annee    = document.getElementById('id_annee').value.trim();
 
-  if (!id_site || !id_salle || !id_cours || !id_groupe || !dateDebut || !dateFin || !annee) {
+  if (!id_site || !id_salle || !id_cours || !id_groupe || !dateDebut || !dateFin || !id_annee) {
     showPlanningMessage("Tous les champs sont requis.", 'danger');
     return;
   }
-
-  // Contrôle cohérence date/heure
   if (new Date(dateDebut) >= new Date(dateFin)) {
     showPlanningMessage("La date de début doit être antérieure à la date de fin.", 'danger');
     return;
   }
-
-  // Appliquer la durée personnalisée si cochée
   if (document.getElementById('customDuration').checked) {
     updateFinFromDuration();
     dateFin = document.getElementById('date_heure_fin').value;
   }
-
   const payload = {
     id_salle,
     id_cours,
     id_groupe,
     date_heure_debut: dateDebut.replace('T',' '),
     date_heure_fin:   dateFin.replace('T',' '),
-    annee_academique: annee
+    id_annee: parseInt(id_annee, 10)
   };
-  
-  // Gestion du matériel mobile sélectionné
+
   const mobileSelect = document.getElementById('mobile_materiel');
   const selectedMateriels = Array.from(mobileSelect.selectedOptions).map(opt => parseInt(opt.value, 10));
   if (selectedMateriels.length > 0) {
@@ -503,7 +509,6 @@ function handlePlanningFormSubmit() {
   const repeatEnd    = document.getElementById('repeatEndDate').value;
 
   if (id_planning) {
-    // Mise à jour d'un planning existant
     fetch(`../../../routes/admin-api.php?entity=planning&action=update&id=${id_planning}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -526,12 +531,9 @@ function handlePlanningFormSubmit() {
       showPlanningMessage("Erreur lors de la requête PUT.", 'danger');
     });
   } else {
-    // Création d'un nouveau planning
     if (!repeatWeekly) {
-      // Simple création si pas de répétition
       createSinglePlanning(payload);
     } else {
-      // Mode répétition hebdomadaire
       if (!repeatEnd) {
         showPlanningMessage("Indiquez la date de fin de répétition.", 'danger');
         return;
@@ -541,7 +543,6 @@ function handlePlanningFormSubmit() {
   }
 }
 
-// Création simple (pas de répétition)
 function createSinglePlanning(plData) {
   fetch('../../../routes/admin-api.php?entity=planning&action=create', {
     method: 'POST',
@@ -566,13 +567,11 @@ function createSinglePlanning(plData) {
   });
 }
 
-// Gestion de la répétition hebdomadaire
 function createWeeklyRecurrence(plData, repeatEndDate) {
   const startDateTime = new Date(plData.date_heure_debut);
   const endDateTime   = new Date(plData.date_heure_fin);
   const endRecurDate  = new Date(repeatEndDate);
   const oneWeekMs     = 7 * 24 * 60 * 60 * 1000;
-
   let currentStart = new Date(startDateTime);
   let currentEnd   = new Date(endDateTime);
   const promises   = [];
@@ -581,13 +580,11 @@ function createWeeklyRecurrence(plData, repeatEndDate) {
     const occPayload = { ...plData };
     occPayload.date_heure_debut = formatDateTime(currentStart);
     occPayload.date_heure_fin   = formatDateTime(currentEnd);
-
     const p = fetch('../../../routes/admin-api.php?entity=planning&action=create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(occPayload)
     }).then(r => r.json());
-
     promises.push(p);
     currentStart.setTime(currentStart.getTime() + oneWeekMs);
     currentEnd.setTime(currentEnd.getTime() + oneWeekMs);
@@ -616,7 +613,6 @@ function createWeeklyRecurrence(plData, repeatEndDate) {
   });
 }
 
-// Conversion Date -> String "YYYY-MM-DD HH:MM:SS"
 function formatDateTime(d) {
   const y   = d.getFullYear();
   const m   = String(d.getMonth() + 1).padStart(2, '0');
@@ -626,7 +622,6 @@ function formatDateTime(d) {
   return `${y}-${m}-${day} ${hh}:${mm}:00`;
 }
 
-// Gestion des codes d'erreur renvoyés par l'API
 function handlePlanningErrorCode(code, message) {
   switch (code) {
     case 'CONFLICT_SALLE':
@@ -642,12 +637,10 @@ function handlePlanningErrorCode(code, message) {
       showPlanningMessage("Impossible de modifier un horaire déjà passé.", 'danger');
       break;
     default:
-      // On affiche le message renvoyé par l'API si disponible
       showPlanningMessage(message || "Erreur de planning inconnue.", 'danger');
   }
 }
 
-// Réinitialiser le formulaire
 function resetPlanningForm() {
   document.getElementById('id_planning').value = '';
   document.getElementById('id_salle').innerHTML  = '<option value="">-- Sélectionnez une salle --</option>';
@@ -656,26 +649,20 @@ function resetPlanningForm() {
   document.getElementById('id_salle').disabled   = true;
   document.getElementById('id_cours').disabled   = true;
   document.getElementById('id_groupe').disabled  = true;
-
   document.getElementById('date_heure_debut').value = '';
   document.getElementById('date_heure_fin').value   = '';
-  document.getElementById('annee_academique').value = '2024-2025';
-
+  document.getElementById('id_annee').value = '';
   document.getElementById('repeatWeekly').checked    = false;
   document.getElementById('repeatEndDate').value     = '';
   document.getElementById('repeatContainer').style.display = 'none';
-
   document.getElementById('customDuration').checked  = false;
   document.getElementById('durationContainer').style.display = 'none';
-
   document.getElementById('mobile_materiel').selectedIndex = -1;
-
   document.getElementById('formTitle').textContent = "Ajouter une Séance de Cours";
   document.getElementById('btnSubmit').textContent = "Enregistrer";
   document.getElementById('btnCancel').style.display = "none";
 }
 
-// Affichage d'un message (alerte) pendant quelques secondes
 function showPlanningMessage(msg, type) {
   const alertMsg = document.getElementById('alertMsg');
   alertMsg.textContent = msg;
@@ -686,7 +673,6 @@ function showPlanningMessage(msg, type) {
   }, 3000);
 }
 
-// Sanitize pour éviter injections HTML
 function sanitize(str) {
   if (typeof str !== 'string') return str;
   return str.replace(/[&<>"'`]/g, m => {
