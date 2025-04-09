@@ -27,7 +27,9 @@ class MaterielService {
                 $row['type_materiel'],
                 (bool)$row['is_mobile'],
                 isset($row['id_salle_fixe']) ? (int)$row['id_salle_fixe'] : null,
-                isset($row['id_site_affectation']) ? (int)$row['id_site_affectation'] : null
+                isset($row['id_site_affectation']) ? (int)$row['id_site_affectation'] : null,
+                $row['salle_fixe'] ?? null,           // nom de la salle
+                $row['site_affectation'] ?? null      // nom du site
             );
         }
         return $materiels;
@@ -49,16 +51,14 @@ class MaterielService {
             $row['type_materiel'],
             (bool)$row['is_mobile'],
             isset($row['id_salle_fixe']) ? (int)$row['id_salle_fixe'] : null,
-            isset($row['id_site_affectation']) ? (int)$row['id_site_affectation'] : null
+            isset($row['id_site_affectation']) ? (int)$row['id_site_affectation'] : null,
+            $row['salle_fixe'] ?? null,          // nom de la salle
+            $row['site_affectation'] ?? null     // nom du site
         );
     }
 
     /**
      * Crée un nouveau matériel.
-     *
-     * @param array $data
-     * @return bool
-     * @throws \InvalidArgumentException
      */
     public function createMateriel(array $data): bool {
         if (empty($data['type_materiel']) || !isset($data['is_mobile'])) {
@@ -69,10 +69,6 @@ class MaterielService {
 
     /**
      * Met à jour un matériel existant.
-     *
-     * @param int $id
-     * @param array $data
-     * @return bool
      */
     public function updateMateriel(int $id, array $data): bool {
         return $this->materielRepository->updateMateriel($id, $data);
@@ -80,9 +76,6 @@ class MaterielService {
 
     /**
      * Supprime un matériel.
-     *
-     * @param int $id
-     * @return bool
      */
     public function deleteMateriel(int $id): bool {
         return $this->materielRepository->deleteMateriel($id);
@@ -90,9 +83,6 @@ class MaterielService {
 
     /**
      * Récupère le matériel fixe installé dans une salle donnée sous forme d'objets Materiel.
-     *
-     * @param int $idSalle
-     * @return Materiel[]
      */
     public function getMaterielBySalle(int $idSalle): array {
         $data = $this->materielRepository->getMaterielBySalle($idSalle);
@@ -111,9 +101,6 @@ class MaterielService {
 
     /**
      * Récupère le matériel mobile affecté à un site donné sous forme d'objets Materiel.
-     *
-     * @param int $siteId
-     * @return Materiel[]
      */
     public function getMobileMaterielBySite(int $siteId): array {
         $data = $this->materielRepository->getMobileMaterielBySite($siteId);
