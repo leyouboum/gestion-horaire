@@ -13,7 +13,7 @@ class PlanningController {
     }
 
     /**
-     * Retourne toutes les séances planifiées.
+     * Retourne l'ensemble des séances planifiées.
      *
      * @return array
      */
@@ -22,7 +22,7 @@ class PlanningController {
     }
 
     /**
-     * Retourne les créneaux planifiés d'un groupe, éventuellement filtrés par période.
+     * Retourne les créneaux planifiés pour un groupe dans une période donnée.
      *
      * @param int $groupId
      * @param string|null $startDate
@@ -34,7 +34,20 @@ class PlanningController {
     }
 
     /**
-     * Retourne une séance planifiée par son ID.
+     * Retourne les créneaux planifiés pour un groupe filtrés par une année académique précise.
+     *
+     * @param int $groupId
+     * @param int $anneeId
+     * @param string|null $startDate
+     * @param string|null $endDate
+     * @return array
+     */
+    public function getPlanningByGroupAndAnnee(int $groupId, int $anneeId, ?string $startDate = null, ?string $endDate = null): array {
+        return $this->planningRepo->getPlanningByGroupAndAnnee($groupId, $anneeId, $startDate, $endDate);
+    }
+
+    /**
+     * Retourne une séance planifiée par son identifiant.
      *
      * @param int $id
      * @return array|null
@@ -46,10 +59,17 @@ class PlanningController {
     /**
      * Crée une nouvelle séance planifiée.
      *
+     * Expects $data incluant :
+     * - 'id_salle', 'id_cours', 'id_groupe', 'date_heure_debut', 'date_heure_fin', 'id_annee'
+     * - Optionnellement : 'statut' (défaut 'planifie') et 'commentaire'
+     *
      * @param array $data
      * @return bool
      */
     public function createPlanning(array $data): bool {
+        if (!isset($data['statut'])) {
+            $data['statut'] = 'planifie';
+        }
         return $this->planningRepo->createPlanning($data);
     }
 

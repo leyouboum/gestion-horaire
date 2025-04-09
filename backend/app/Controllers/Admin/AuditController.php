@@ -13,7 +13,7 @@ class AuditController {
     }
 
     /**
-     * 
+     * Liste l'ensemble des logs d'audit.
      *
      * @return array
      */
@@ -27,7 +27,7 @@ class AuditController {
     }
 
     /**
-     * 
+     * Retourne un log d'audit à partir de son identifiant.
      *
      * @param int $id
      * @return array|null

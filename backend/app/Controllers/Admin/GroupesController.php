@@ -13,7 +13,7 @@ class GroupesController {
     }
 
     /**
-     * Retourne tous les groupes.
+     * Retourne la liste de tous les groupes.
      *
      * @return array
      */
@@ -22,7 +22,7 @@ class GroupesController {
     }
 
     /**
-     * Retourne un groupe par son ID.
+     * Retourne un groupe par son identifiant.
      *
      * @param int $id
      * @return array|null
@@ -38,6 +38,7 @@ class GroupesController {
      * @return bool
      */
     public function createGroupe(array $data): bool {
+        // Expects: 'nom_groupe', 'nb_etudiants', 'id_universite'
         return $this->groupeRepo->create($data);
     }
 

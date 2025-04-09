@@ -26,6 +26,7 @@ class HoraireController
     /**
      * Renvoie l'emploi du temps complet d'un groupe, incluant les matériels fixes et mobiles.
      * Paramètre GET requis : group_id.
+     * Optionnel : annee_id pour filtrer sur une année académique précise.
      */
     public function getEmploiDuTemps(): void
     {
@@ -35,9 +36,15 @@ class HoraireController
             return;
         }
         $groupId = (int) $_GET['group_id'];
+        $anneeId = isset($_GET['annee_id']) ? (int) $_GET['annee_id'] : null;
 
         try {
-            $planning = $this->planningRepository->getPlanningByGroup($groupId);
+            if ($anneeId !== null) {
+                // Méthode spécifique dans le repository pour filtrer par année académique.
+                $planning = $this->planningRepository->getPlanningByGroupAndAnnee($groupId, $anneeId);
+            } else {
+                $planning = $this->planningRepository->getPlanningByGroup($groupId);
+            }
             echo json_encode($planning);
         } catch (\Exception $ex) {
             http_response_code(500);
@@ -47,7 +54,7 @@ class HoraireController
 
     /**
      * Renvoie les filtres disponibles pour un groupe (sites, cours, salles).
-     * 
+     * Paramètre GET requis : group_id.
      */
     public function getFilters(): void
     {
